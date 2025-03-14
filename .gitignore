@@ -1,0 +1,99 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+package-lock.json
+bun.lockb
+yarn.lock
+
+# Testing
+/coverage
+/.nyc_output
+/cypress/videos/
+/cypress/screenshots/
+
+# Next.js
+/.next/
+/out/
+/build
+.next-env.d.ts
+
+# Production
+/dist
+/build
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+
+# IDE & Editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+.DS_Store
+.history/
+
+# Prisma
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/migrations/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Vercel
+.vercel
+
+# Local files
+*.local
+
+# Local Netlify folder
+.netlify
+
+# Misc
+*.pem
+
+# Local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Prisma
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# PWA files
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map

@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Tamu {
+  id           Int      @id @default(autoincrement())
+  jenisTamu    String   // 'umum' atau 'wali'
+  nama         String
+  noKontak     String
+  asal         String
+  kelamin      String   // 'L', 'P', atau 'G' untuk group
+  keperluan    String
+  fotoSelfi    String?  // path ke file foto
+  createdAt    DateTime @default(now())
+  
+  // Fields untuk Tamu Wali
+  waliDari     String?
+  kelas        String?
+  
+  // Fields untuk Tamu Umum
+  jenisKunjungan String? // 'lembaga' atau 'individu'
+  namaLembaga   String?
+  jumlahOrang   Int?
+  jumlahLaki    Int?    // Jumlah laki-laki untuk lembaga
+  jumlahPerempuan Int?  // Jumlah perempuan untuk lembaga
+  
+  // Fields untuk menginap
+  menginap      Boolean @default(false)
+  tanggalKeluar DateTime?
+} 
