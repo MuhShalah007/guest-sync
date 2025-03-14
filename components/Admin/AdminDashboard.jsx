@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiLogOut, FiUsers, FiUserCheck, FiUserPlus, FiBriefcase, FiCalendar, FiFilter } from 'react-icons/fi';
+import { FiLogOut, FiUser, FiUsers, FiUserCheck, FiUserPlus, FiBriefcase, FiCalendar, FiFilter, FiX } from 'react-icons/fi';
 
 const AdminDashboard = ({ onLogout }) => {
   const [tamu, setTamu] = useState([]);
@@ -42,6 +42,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [endDate, setEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showDetailStats, setShowDetailStats] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -381,6 +382,8 @@ const AdminDashboard = ({ onLogout }) => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                  <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foto</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelamin</th>
@@ -392,8 +395,25 @@ const AdminDashboard = ({ onLogout }) => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {tamu.length > 0 ? (
-                  tamu.map((item) => (
+                  tamu.map((item, index) => (
                     <tr key={item.id} className="hover:bg-gray-50 transition duration-150">
+                      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500">
+                        {index + 1}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {item.fotoSelfi ? (
+                          <img
+                            src={item.fotoSelfi}
+                            alt="Foto Selfi"
+                            className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setSelectedImage(item.fotoSelfi)}
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <FiUser className="h-6 w-6 text-gray-400" />
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3 px-4 whitespace-nowrap">{item.nama}</td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -454,6 +474,31 @@ const AdminDashboard = ({ onLogout }) => {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="relative max-w-3xl max-h-[90vh] bg-white rounded-lg shadow-xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-2 p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-opacity"
+              onClick={() => setSelectedImage(null)}
+            >
+              <FiX className="h-6 w-6" />
+            </button>
+            <img
+              src={selectedImage}
+              alt="Foto Selfi"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
