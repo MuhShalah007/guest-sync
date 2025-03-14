@@ -16,7 +16,7 @@ GuestSync adalah aplikasi buku tamu digital yang memungkinkan pengelolaan data t
 
 - Node.js (versi 14 atau lebih baru)
 - NPM atau Yarn
-- SQLite
+- PostgreSQL atau SQLite
 
 ## Instalasi
 
@@ -31,19 +31,75 @@ cd guest-sync
 npm install
 ```
 
-3. Setup database:
+3. Copy file .env.example:
+```bash
+cp .env.example .env
+```
+
+4. Setup environment variables di .env:
+```env
+# Admin Authentication
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="your-secure-password"
+NEXTAUTH_SECRET="your-nextauth-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
+```
+
+## Setup Database
+
+### Menggunakan PostgreSQL (Recommended untuk Production)
+
+1. Buat database di [Prisma Data Platform](https://console.prisma.io/):
+   - Login/Register di Prisma Data Platform
+   - Buat project baru
+   - Pilih "PostgreSQL"
+   - Ikuti wizard untuk membuat database
+   - Copy connection string yang diberikan
+
+2. Update DATABASE_URL di .env dengan connection string dari Prisma Data Platform
+
+3. Push schema ke database:
+```bash
+npx prisma db push
+```
+
+4. (Opsional) Generate dan seed data:
+```bash
+npx prisma generate
+npm run prisma:seed
+```
+
+### Menggunakan SQLite (untuk Development)
+
+1. Update DATABASE_URL di .env:
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+2. Setup database:
 ```bash
 npm run prisma:migrate
 ```
 
-4. Tambahkan data dummy (opsional):
+3. (Opsional) Tambahkan data dummy:
 ```bash
 npm run seed
 ```
 
-5. Jalankan aplikasi:
+## Menjalankan Aplikasi
+
+Development mode:
 ```bash
 npm run dev
+```
+
+Production mode:
+```bash
+npm run build
+npm start
 ```
 
 ## Penggunaan
@@ -108,3 +164,16 @@ Untuk menambahkan fitur atau melakukan perbaikan:
 ## Lisensi
 
 MIT License
+
+## Troubleshooting Database
+
+### PostgreSQL
+- Pastikan connection string sudah benar
+- Cek firewall/network rules di Prisma Data Platform
+- Gunakan SSL connection jika diperlukan
+- Jalankan `npx prisma db push` setiap kali ada perubahan schema
+
+### SQLite
+- Pastikan folder prisma memiliki permission write
+- Backup file dev.db secara berkala
+- Reset database: `npx prisma migrate reset`

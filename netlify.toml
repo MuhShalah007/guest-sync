@@ -1,5 +1,5 @@
 [build]
-  command = "npm run prisma:migrate && npm run build"
+  command = "npm run build"
   publish = ".next"
 
 [[plugins]]
@@ -8,4 +8,3 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
   NODE_VERSION = "20"
-  

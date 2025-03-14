@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiLogOut, FiUser, FiUsers, FiUserCheck, FiUserPlus, FiBriefcase, FiCalendar, FiFilter, FiX } from 'react-icons/fi';
+import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
-const AdminDashboard = ({ onLogout }) => {
+const AdminDashboard = () => {
+  const router = useRouter();
   const [tamu, setTamu] = useState([]);
   const [stats, setStats] = useState({
     hariIni: {
@@ -140,6 +143,13 @@ const AdminDashboard = ({ onLogout }) => {
     };
   };
 
+  const handleLogout = async () => {
+    await signOut({ 
+      redirect: false 
+    });
+    router.push('/admin/login');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
@@ -148,7 +158,7 @@ const AdminDashboard = ({ onLogout }) => {
           <h1 className="text-2xl font-bold text-gray-800">Dashboard Admin</h1>
         </div>
         <button
-          onClick={onLogout}
+          onClick={handleLogout}
           className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200 flex items-center gap-2"
         >
           <FiLogOut /> Logout

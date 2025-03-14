@@ -1,18 +1,39 @@
 import React, { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { FiUser, FiLock } from 'react-icons/fi';
 
-const AdminLogin = ({ onLogin }) => {
+const AdminLogin = () => {
+  const router = useRouter();
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      onLogin(true);
-    } else {
-      setError('Username atau password salah!');
-      setTimeout(() => setError(''), 3000);
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await signIn('credentials', {
+        username: credentials.username,
+        password: credentials.password,
+        redirect: false
+      });
+
+      if (result.error) {
+        setError('Username atau password salah!');
+        setTimeout(() => setError(''), 3000);
+      } else {
+        // Redirect ke dashboard admin jika login berhasil
+        router.push('/admin');
+      }
+    } catch (error) {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

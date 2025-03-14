@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiLoader, FiUser, FiUsers, FiLogOut, FiBriefcase, FiCalendar, FiUserPlus } from 'react-icons/fi';
 import { AiOutlineUser, AiOutlineBook, AiOutlineEnvironment, AiOutlinePhone, AiOutlineMan, AiOutlineWoman } from "react-icons/ai";
 import DatePicker from 'react-datepicker';
+
 const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoading }) => {
   const [showCamera, setShowCamera] = useState(false);
   const webcamRef = useRef(null);
@@ -532,7 +533,6 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             transition={{ duration: 0.3 }}
           >
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-              <FiBriefcase className="h-4 w-4 mr-2 text-indigo-500" />
               Keperluan <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -569,7 +569,6 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                 onClick={(e) => e.stopPropagation()}
                 className="text-sm font-medium text-gray-700 flex items-center"
               >
-                <FiCalendar className="h-4 w-4 mr-2 text-indigo-500" />
                 Menginap
               </label>
             </div>
@@ -580,26 +579,23 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
+                className="space-y-2"
               >
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                  <FiCalendar className="h-4 w-4 mr-2 text-indigo-500" />
-                  Tanggal Keluar <span className="text-red-500">*</span>
+                  Tanggal Keluar <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <FiCalendar className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <DatePicker
                     selected={formData.tanggalKeluar ? new Date(formData.tanggalKeluar) : null}
                     onChange={handleDateChange}
                     minDate={new Date()}
                     dateFormat="dd/MM/yyyy"
-                    className="w-full outline-none pl-10 p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    className="w-full outline-none pl-10 p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                     placeholderText="Pilih tanggal keluar"
-                    required
-                    calendarClassName="shadow-lg rounded-lg border border-gray-200"
+                    required={formData.menginap}
                   />
-                 </div>
+                </div>
               </motion.div>
             )}
           </motion.div>
@@ -611,7 +607,6 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             transition={{ duration: 0.3, delay: 0.2 }}
           >
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-              <FiUser className="h-4 w-4 mr-2 text-indigo-500" />
               Foto Selfi
             </label>
             {showCamera ? (
