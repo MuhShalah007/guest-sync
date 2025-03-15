@@ -3,7 +3,7 @@
 /.pnp
 .pnp.js
 package-lock.json
-bun.lockb
+bun.lock*
 yarn.lock
 
 # Testing

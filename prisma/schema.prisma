@@ -15,7 +15,7 @@ model Tamu {
   asal         String
   kelamin      String   // 'L', 'P', atau 'G' untuk group
   keperluan    String
-  fotoSelfi    String?  // path ke file foto
+  fotoSelfi    String  // path ke file foto
   createdAt    DateTime @default(now())
   
   // Fields untuk Tamu Wali

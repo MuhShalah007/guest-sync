@@ -35,7 +35,11 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
 
   const handleCapture = useCallback(() => {
     try {
-      const imageSrc = webcamRef.current.getScreenshot();
+      const imageSrc = webcamRef.current.getScreenshot({
+        width: 1920,
+        height: 1080,
+        quality: 1.0
+      });
       if (!imageSrc) {
         throw new Error('Gagal mengambil foto');
       }
@@ -48,7 +52,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
       alert('Gagal mengambil foto. Pastikan kamera sudah diizinkan.');
       console.error('Error capturing photo:', error);
     }
-  }, [setFormData, webcamRef]);
+}, [setFormData, webcamRef]);
 
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
@@ -189,7 +193,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
           {/* Jenis Kelamin */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Jenis Kelamin <span className="text-red-500">*</span>
+              Jenis Kelamin <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="flex space-x-4">
               <motion.div 
@@ -242,7 +246,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
           {/* Nama */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nama <span className="text-red-500">*</span>
+              Nama <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -287,7 +291,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
           {/* No. Kontak */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              No. Kontak <span className="text-red-500">*</span>
+              No. Kontak <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -308,7 +312,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
           {/* Asal */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Asal <span className="text-red-500">*</span>
+              Asal <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -336,7 +340,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Wali Dari <span className="text-red-500">*</span>
+                  Wali Dari <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -355,7 +359,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kelas <span className="text-red-500">*</span>
+                  Kelas <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -385,7 +389,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jenis Kunjungan <span className="text-red-500">*</span>
+                  Jenis Kunjungan <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <motion.button
@@ -428,7 +432,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nama Lembaga <span className="text-red-500">*</span>
+                      Nama Lembaga <span className="text-red-500 ml-1">*</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -447,7 +451,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Jumlah Orang <span className="text-red-500">*</span>
+                      Jumlah Orang <span className="text-red-500 ml-1">*</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -478,7 +482,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                       transition={{ duration: 0.3 }}
                     >
                       <label className="block text-sm font-medium text-gray-700">
-                        Rincian Jumlah Berdasarkan Jenis Kelamin <span className="text-red-500">*</span>
+                        Rincian Jumlah Berdasarkan Jenis Kelamin <span className="text-red-500 ml-1">*</span>
                       </label>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -533,7 +537,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             transition={{ duration: 0.3 }}
           >
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-              Keperluan <span className="text-red-500">*</span>
+              Keperluan <span className="text-red-500 ml-1">*</span>
             </label>
             <textarea
               name="keperluan"
@@ -607,7 +611,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             transition={{ duration: 0.3, delay: 0.2 }}
           >
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-              Foto Selfi
+              Foto Selfi <span className="text-red-500 ml-1">*</span>
             </label>
             {showCamera ? (
               <motion.div 
@@ -621,10 +625,14 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
                   videoConstraints={{
-                    width: 1280,
-                    height: 720,
-                    facingMode: "user"
+                    width: 1920,
+                    height: 1080,
+                    facingMode: "user",
+                    aspectRatio: 16/9,
+                    frameRate: { ideal: 30 }
                   }}
+                  imageSmoothing={true}
+                  screenshotQuality={1}
                   className="w-full rounded-lg shadow-md"
                 />
                 <div className="flex space-x-2">
@@ -692,9 +700,9 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
 
           <motion.button
             type="submit"
-            disabled={isLoading || (formData.jenisKunjungan === 'lembaga' && !validasiJumlah)}
+            disabled={isLoading || (formData.jenisKunjungan === 'lembaga' && !validasiJumlah) || !formData.fotoSelfi}
             className={`${
-              isLoading || (formData.jenisKunjungan === 'lembaga' && !validasiJumlah)
+              isLoading || (formData.jenisKunjungan === 'lembaga' && !validasiJumlah) || !formData.fotoSelfi
                 ? 'bg-gray-400'
                 : 'bg-green-600 hover:bg-green-700'
             } text-white font-bold py-3 px-6 rounded-lg w-full flex items-center justify-center space-x-2 transition-all duration-200`}
