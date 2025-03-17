@@ -46,6 +46,7 @@ const AdminDashboard = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [showDetailStats, setShowDetailStats] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
@@ -65,6 +66,7 @@ const AdminDashboard = () => {
   };
 
   const fetchStats = useCallback(async () => {
+    setIsLoadingStats(true);
     try {
       const response = await fetch('/api/stats');
       if (!response.ok) {
@@ -74,6 +76,8 @@ const AdminDashboard = () => {
       setStats(data);
     } catch (error) {
       console.error('Error fetching stats:', error);
+    } finally {
+      setIsLoadingStats(false);
     }
   }, []);
 
@@ -222,7 +226,7 @@ const AdminDashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.hariIni.total === 0 ? (
+        {isLoadingStats ? (
           <>
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="animate-pulse bg-white p-4 rounded-lg shadow-lg">
@@ -331,7 +335,7 @@ const AdminDashboard = () => {
 
       <div className="flex gap-4 mb-6">
         <div className="flex-1">
-          {stats.bulanIni.total === 0 ? (
+          {isLoadingStats ? (
             <div className="animate-pulse bg-white p-4 rounded-lg shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
