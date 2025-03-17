@@ -1,31 +1,58 @@
 import { PrismaClient } from '@prisma/client';
+import { isAuthenticated } from '../../middleware/auth';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
+  // Stats API selalu membutuhkan autentikasi
+  const isAuth = await isAuthenticated(req);
+  if (!isAuth) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   if (req.method === 'GET') {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Query untuk tamu hari ini
+      // Query untuk tamu hari ini dengan select spesifik
       const tamuHariIni = await prisma.tamu.findMany({
         where: {
           createdAt: {
             gte: today,
             lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
           }
+        },
+        select: {
+          id: true,
+          jenisTamu: true,
+          kelamin: true,
+          jenisKunjungan: true,
+          jumlahOrang: true,
+          jumlahLaki: true,
+          jumlahPerempuan: true,
+          menginap: true,
+          keperluan: true
         }
       });
 
-      // Query untuk tamu yang masih menginap (dari hari sebelumnya)
+      // Query untuk tamu menginap dengan select spesifik
       const tamuMenginap = await prisma.tamu.findMany({
         where: {
           AND: [
             { menginap: true },
             { tanggalKeluar: { gte: today } },
-            { createdAt: { lt: today } } // Hanya ambil yang check-in sebelum hari ini
+            { createdAt: { lt: today } }
           ]
+        },
+        select: {
+          id: true,
+          jenisTamu: true,
+          kelamin: true,
+          jenisKunjungan: true,
+          jumlahOrang: true,
+          jumlahLaki: true,
+          jumlahPerempuan: true
         }
       });
 
@@ -172,7 +199,7 @@ export default async function handler(req, res) {
         jumlahOrang: data.jumlahOrang
       }));
 
-      // Tambahkan query untuk statistik bulan ini
+      // Tambahkan query untuk statistik bulan ini dengan select spesifik
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -182,6 +209,15 @@ export default async function handler(req, res) {
           createdAt: {
             gte: startOfMonth
           }
+        },
+        select: {
+          id: true,
+          jenisTamu: true,
+          kelamin: true,
+          jenisKunjungan: true,
+          jumlahOrang: true,
+          jumlahLaki: true,
+          jumlahPerempuan: true
         }
       });
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import GuestForm from '../components/GuestForm';
+import Footer from '../components/Footer';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { FiUsers, FiUserCheck, FiLogIn } from 'react-icons/fi';
@@ -96,7 +97,8 @@ export default function Home() {
       });
       
       if (!response.ok) {
-        throw new Error('Gagal menyimpan data');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan data');
       }
       
       const result = await response.json();
@@ -131,27 +133,12 @@ export default function Home() {
   };
 
   return (
+  <>
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
       <div className="container mx-auto px-4 py-8">
-        <motion.div 
-          className="text-right mb-4"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.button
-            onClick={() => router.push('/admin')}
-            className="inline-flex items-center px-4 py-2 bg-white rounded-lg shadow-md text-blue-600 hover:bg-blue-50 transition-all duration-200"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiLogIn className="mr-2" />
-            Admin Login
-          </motion.button>
-        </motion.div>
 
         <motion.h1 
-          className="text-4xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 leading-normal"
+          className="text-2xl md:text-4xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 leading-normal py-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -233,5 +220,7 @@ export default function Home() {
         )}
       </div>
     </div>
+    <Footer />
+  </>
   );
 } 

@@ -4,9 +4,16 @@ import { motion } from 'framer-motion';
 import { FiLoader, FiUser, FiUsers, FiLogOut, FiBriefcase, FiCalendar, FiUserPlus } from 'react-icons/fi';
 import { AiOutlineUser, AiOutlineBook, AiOutlineEnvironment, AiOutlinePhone, AiOutlineMan, AiOutlineWoman } from "react-icons/ai";
 import DatePicker from 'react-datepicker';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import path from "path";
+
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoading }) => {
   const [showCamera, setShowCamera] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });  
+  const [imageSize, setImageSize] = useState(0);
   const webcamRef = useRef(null);
   const [jumlahLaki, setJumlahLaki] = useState(0);
   const [jumlahPerempuan, setJumlahPerempuan] = useState(0);
@@ -26,6 +33,21 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
     };
   }, [setFormData]);
 
+  const dataURItoBlob = (dataURI) => {
+    const byteString = atob(dataURI.split(',')[1]);
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const uintArray = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
+      uintArray[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([uintArray], { type: 'image/jpeg' });
+  };
+
+  const formatFileSize = (bytes) => {
+    const mb = bytes / (1024 * 1024); // Convert bytes to MB
+    return mb.toFixed(2); // Return with 2 decimal places
+  };
+
   const handleDateChange = useCallback((date) => {
     setFormData(prev => ({
       ...prev,
@@ -33,9 +55,27 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
     }));
   }, [setFormData]);
 
-  const handleCapture = useCallback(() => {
+  const handleImageLoad = (e) => {
+    const { naturalWidth, naturalHeight } = e.target;
+    setImageDimensions({ width: naturalWidth, height: naturalHeight });
+  }
+  const handleReloadWebcam = async(e) => {
+    setShowCamera(true);
+    const fileName = formData.fotoSelfi.split('/').pop();
+    const response = await fetch(`/api/upload/delete?filename=${fileName}`, {method: 'DELETE'});
+
+    const result = await response.json();
+    
+    if (result.ok) {
+      console.log('File uploaded successfully:', result.result);
+    } else {
+      console.error('Upload failed:', result.result);
+    }
+  }
+
+  const handleCapture = useCallback(async () => {
     try {
-      const imageSrc = webcamRef.current.getScreenshot({
+      let imageSrc = webcamRef.current.getScreenshot({
         width: 1920,
         height: 1080,
         quality: 1.0
@@ -43,11 +83,31 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
       if (!imageSrc) {
         throw new Error('Gagal mengambil foto');
       }
+      const file = dataURItoBlob(imageSrc);
+      setImageSize(file.size);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      
+      if (result.ok) {
+        imageSrc = result.result;
+        console.log(imageSrc)
+      } else {
+        console.error('Upload failed:', result.result);
+      }
       setFormData(prev => ({
         ...prev,
         fotoSelfi: imageSrc
       }));
       setShowCamera(false);
+
     } catch (error) {
       alert('Gagal mengambil foto. Pastikan kamera sudah diizinkan.');
       console.error('Error capturing photo:', error);
@@ -171,17 +231,17 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-md mx-auto p-6"
+      className="w-full max-w-md mx-auto px-4 sm:px-6"
     >
       <motion.form 
         onSubmit={onSubmit} 
-        className="w-full space-y-6 bg-white rounded-xl shadow-lg p-6 border border-gray-100"
+        className="w-full space-y-6 bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100"
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.3 }}
       >
         <motion.h2 
-          className="text-2xl font-bold text-center mb-6 text-indigo-700"
+          className="text-2xl font-bold text-center mb-4 sm:mb-6 text-indigo-700"
           initial={{ y: -10 }}
           animate={{ y: 0 }}
           transition={{ delay: 0.2 }}
@@ -294,15 +354,21 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
               No. Kontak <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <AiOutlinePhone className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
+              <PhoneInput
                 name="noKontak"
+                country={'id'}
                 value={formData.noKontak}
-                onChange={handleChange}
-                className="w-full outline-none pl-10 p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                onChange={(value) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    noKontak: value
+                  }))
+                }}
+                inputClass="w-full outline-none p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                containerClass="phone-input"
+                buttonClass="border-0 bg-transparent hover:bg-gray-100 transition-all duration-200"
+                dropdownClass="bg-white border border-gray-200 rounded-lg shadow-lg"
+                searchClass="p-2 border-b border-gray-200"
                 placeholder="Nomor telepon/WA"
                 required
               />
@@ -593,7 +659,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                   <DatePicker
                     selected={formData.tanggalKeluar ? new Date(formData.tanggalKeluar) : null}
                     onChange={handleDateChange}
-                    minDate={new Date()}
+                    minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
                     dateFormat="dd/MM/yyyy"
                     className="w-full outline-none pl-10 p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                     placeholderText="Pilih tanggal keluar"
@@ -666,14 +732,18 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
               >
                 {formData.fotoSelfi ? (
                   <div className="space-y-2">
+                    <div className="text-sm text-gray-600">
+                      <p>Ukuran gambar: {imageDimensions.width} x {imageDimensions.height} {formatFileSize(imageSize)} MB</p>
+                    </div>
                     <img
                       src={formData.fotoSelfi}
                       alt="Foto Selfi"
                       className="w-full max-h-64 object-contain rounded-lg shadow-md"
+                onLoad={handleImageLoad}
                     />
                     <motion.button
                       type="button"
-                      onClick={() => setShowCamera(true)}
+                      onClick={handleReloadWebcam}
                       className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}

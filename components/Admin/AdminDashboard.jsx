@@ -6,6 +6,8 @@ import { useRouter } from 'next/router';
 const AdminDashboard = () => {
   const router = useRouter();
   const [tamu, setTamu] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({
     hariIni: {
       total: 0,
@@ -45,23 +47,22 @@ const AdminDashboard = () => {
   const [endDate, setEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showDetailStats, setShowDetailStats] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async (page = 1) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const response = await fetch(`/api/tamu?jenisTamu=${filter}&startDate=${startDate}&endDate=${endDate}`);
-      if (!response.ok) {
-        throw new Error('Gagal mengambil data');
-      }
+      const response = await fetch(`/api/tamu?page=${page}&limit=20`);
       const data = await response.json();
-      setTamu(data);
+      setTamu(data.data);
+      setTotalPages(data.pagination.totalPages);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [filter, startDate, endDate]);
+  };
 
   const fetchStats = useCallback(async () => {
     try {
@@ -77,9 +78,25 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    fetchStats();
-  }, [filter, startDate, endDate, fetchData, fetchStats]);
+    // Fungsi untuk fetch data awal
+    const initializeDashboard = async () => {
+      await fetchData(currentPage);
+      await fetchStats();
+    };
+    
+    initializeDashboard();
+    
+    // Opsional: Setup interval untuk auto-refresh
+    const interval = setInterval(fetchStats, 300000); // Refresh setiap 5 menit
+    
+    return () => clearInterval(interval);
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (filter !== 'semua' || startDate || endDate) {
+      fetchData(1); // Reset ke halaman pertama saat filter berubah
+    }
+  }, [filter, startDate, endDate]);
 
   const formatWaktu = (timestamp) => {
     const now = new Date();
@@ -150,6 +167,45 @@ const AdminDashboard = () => {
     router.push('/admin/login');
   };
 
+
+  // Pagination controls
+  const Pagination = () => (
+    <div className="mt-4 flex justify-center gap-2">
+      <button
+        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+      >
+        Previous
+      </button>
+      
+      {[...Array(totalPages)].map((_, i) => (
+        <button
+          key={i + 1}
+          onClick={() => setCurrentPage(i + 1)}
+          className={`px-3 py-1 rounded ${
+            currentPage === i + 1
+              ? 'bg-blue-500 text-white'
+              : 'bg-gray-200 hover:bg-gray-300'
+          }`}
+        >
+          {i + 1}
+        </button>
+      )).slice(
+        Math.max(0, currentPage - 3),
+        Math.min(totalPages, currentPage + 2)
+      )}
+
+      <button
+        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+      >
+        Next
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
       <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-md">
@@ -214,7 +270,7 @@ const AdminDashboard = () => {
                 <div className="mt-2 text-sm bg-green-700 px-2 py-1 rounded">
                   Termasuk {stats.hariIni.menginap.wali.total} tamu menginap
                   <div className="text-xs opacity-90">
-                    (Lk: {stats.hariIni.menginap.wali.L}, Pr: {stats.hariIni.menginap.wali.P})
+                    {[ stats.hariIni.menginap.wali.L && `Lk:${stats.hariIni.menginap.wali.L}`, stats.hariIni.menginap.wali.P && `Pr:${stats.hariIni.menginap.wali.P}` ] .filter(Boolean).join(', ')}
                   </div>
                 </div>
               )}
@@ -236,7 +292,7 @@ const AdminDashboard = () => {
                 <div className="mt-2 text-sm bg-purple-700 px-2 py-1 rounded">
                   Termasuk {stats.hariIni.menginap.umum.individu.total} tamu menginap
                   <div className="text-xs opacity-90">
-                    (Lk: {stats.hariIni.menginap.umum.individu.L}, Pr: {stats.hariIni.menginap.umum.individu.P})
+                    {[ stats.menginap.umum.individu.L && `Lk:${stats.menginap.umum.individu.L}`, stats.menginap.umum.individu.P && `Pr:${stats.menginap.umum.individu.P}` ] .filter(Boolean).join(', ')}
                   </div>
                 </div>
               )}
@@ -251,7 +307,9 @@ const AdminDashboard = () => {
                 <div>
                   <p className="text-sm opacity-90">Kunjungan: {stats.hariIni.umum.lembaga.total}</p>
                   <p className="text-sm opacity-90">Jumlah: {stats.hariIni.umum.lembaga.jumlahOrang}</p>
-                  <p className="text-xs opacity-75">Lk: {stats.hariIni.umum.lembaga.L}, Pr: {stats.hariIni.umum.lembaga.P}</p>
+                  <p className="text-xs opacity-75">
+                    {[ stats.hariIni.umum.lembaga.L && `Lk:${stats.hariIni.umum.lembaga.L}`, stats.hariIni.umum.lembaga.P && `Pr:${stats.hariIni.umum.lembaga.P}` ] .filter(Boolean).join(', ')}
+                  </p>
                 </div>
                 <p className="text-3xl font-bold">{stats.hariIni.umum.lembaga.total}</p>
               </div>
@@ -261,7 +319,7 @@ const AdminDashboard = () => {
                   <div className="text-xs opacity-90">
                     ({stats.hariIni.menginap.umum.lembaga.jumlahOrang} orang)
                     <div className="text-xs">
-                      Lk: {stats.hariIni.menginap.umum.lembaga.L}, Pr: {stats.hariIni.menginap.umum.lembaga.P}
+                      {[ stats.hariIni.menginap.umum.lembaga.L && `Lk:${stats.hariIni.menginap.umum.lembaga.L}`, stats.hariIni.menginap.umum.lembaga.P && `Pr:${stats.hariIni.menginap.umum.lembaga.P}` ] .filter(Boolean).join(', ')}
                     </div>
                   </div>
                 </div>
@@ -345,8 +403,7 @@ const AdminDashboard = () => {
                     <div className="text-sm opacity-90">
                       <p>Jumlah Orang: {stats.bulanIni.umum.lembaga.jumlahOrang}</p>
                       <p className="text-xs">
-                        Lk: {stats.bulanIni.umum.lembaga.L}, 
-                        Pr: {stats.bulanIni.umum.lembaga.P}
+                        {[ stats.bulanIni.umum.lembaga.L && `Lk:${stats.bulanIni.umum.lembaga.L}`, stats.bulanIni.umum.lembaga.P && `Pr:${stats.bulanIni.umum.lembaga.P}` ] .filter(Boolean).join(', ')}
                       </p>
                     </div>
                   </div>
@@ -479,12 +536,23 @@ const AdminDashboard = () => {
                         {index + 1}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        {item.fotoSelfi ? (
+                        {item.hasFullPhoto ? (
                           <img
-                            src={item.fotoSelfi}
+                            src={`/api/tamu/photo?id=${item.id}`}
                             alt="Foto Selfi"
                             className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => setSelectedImage(item.fotoSelfi)}
+                            onClick={async () => {
+                              if (item.hasFullPhoto) {
+                                setIsLoadingPhoto(true);
+                                try {
+                                    setSelectedPhoto(`/api/tamu/photo?id=${item.id}`);
+                                } catch (error) {
+                                  console.error('Error:', error);
+                                } finally {
+                                  setIsLoadingPhoto(false);
+                                }
+                              }
+                            }}
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -522,7 +590,7 @@ const AdminDashboard = () => {
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         {item.kelamin === 'G' 
-                          ? `Lk:${item.jumlahLaki || '?'}, Pr:${item.jumlahPerempuan || '?'}`
+                          ? [ item.jumlahLaki && `Lk:${item.jumlahLaki}`, item.jumlahPerempuan && `Pr:${item.jumlahPerempuan}` ] .filter(Boolean).join(', ')
                           : item.kelamin === 'L' 
                             ? 'Laki-laki' 
                             : 'Perempuan'}
@@ -543,11 +611,21 @@ const AdminDashboard = () => {
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         {item.menginap ? (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          <span
+                            className={`
+                              px-2 py-1 rounded-full text-xs font-medium
+                              ${(() => {
+                                const { tanggalFormatted, sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
+                                return sisaHari > 0 
+                                  ? 'bg-purple-100 text-purple-800' 
+                                  : 'bg-red-100 text-red-800';
+                              })()}
+                            `}
+                          >
                             {(() => {
                               const { tanggalFormatted, sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
                               return sisaHari > 0 
-                                ? `Ya (s/d ${tanggalFormatted} • ${sisaHari} hari lagi)`
+                                ? `Ya (s/d ${tanggalFormatted} • ${sisaHari} hari lagi)` 
                                 : `Ya (s/d ${tanggalFormatted} • sudah lewat)`;
                             })()}
                           </span>
@@ -575,11 +653,13 @@ const AdminDashboard = () => {
         )}
       </div>
 
+      <Pagination />
+
       {/* Image Modal */}
-      {selectedImage && (
+      {selectedPhoto && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedImage(null)}
+          onClick={() => setSelectedPhoto(null)}
         >
           <div 
             className="relative max-w-3xl max-h-[90vh] bg-white rounded-lg shadow-xl overflow-hidden"
@@ -587,15 +667,21 @@ const AdminDashboard = () => {
           >
             <button
               className="absolute top-2 right-2 p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-opacity"
-              onClick={() => setSelectedImage(null)}
+              onClick={() => setSelectedPhoto(null)}
             >
               <FiX className="h-6 w-6" />
             </button>
-            <img
-              src={selectedImage}
-              alt="Foto Selfi"
-              className="w-full h-full object-contain"
-            />
+            {isLoadingPhoto ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+              </div>
+            ) : (
+              <img
+                src={selectedPhoto}
+                alt="Foto Selfi"
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
         </div>
       )}
