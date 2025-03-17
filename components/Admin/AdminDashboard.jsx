@@ -419,7 +419,7 @@ const AdminDashboard = () => {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-lg mb-6 backdrop-blur-lg bg-opacity-90">
-        {stats.keperluan.length === 0 ? (
+        { isLoadingStats ? (
           <div className="animate-pulse space-y-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-6 w-6 bg-gray-300 rounded"></div>
@@ -477,7 +477,7 @@ const AdminDashboard = () => {
             </select>
           </div>
           
-          <div className="flex-1 min-w-[200px]">
+          {/* <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
             <input
               type="date"
@@ -485,9 +485,9 @@ const AdminDashboard = () => {
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div>
+          </div> */}
           
-          <div className="flex-1 min-w-[200px]">
+          {/* <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
             <input
               type="date"
@@ -495,7 +495,7 @@ const AdminDashboard = () => {
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div>
+          </div> */}
         </div>
         
         {isLoading ? (
