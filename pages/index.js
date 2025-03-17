@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import GuestForm from '../components/GuestForm';
 import Footer from '../components/Footer';
-import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
-import { FiUsers, FiUserCheck, FiLogIn } from 'react-icons/fi';
+import { FiUsers, FiUserCheck } from 'react-icons/fi';
 
 export default function Home() {
-  const router = useRouter();
   const [jenisTamu, setJenisTamu] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({

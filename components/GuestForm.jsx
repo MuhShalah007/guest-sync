@@ -2,13 +2,10 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { motion } from 'framer-motion';
 import { FiLoader, FiUser, FiUsers, FiLogOut, FiBriefcase, FiCalendar, FiUserPlus } from 'react-icons/fi';
-import { AiOutlineUser, AiOutlineBook, AiOutlineEnvironment, AiOutlinePhone, AiOutlineMan, AiOutlineWoman } from "react-icons/ai";
+import { AiOutlineUser, AiOutlineBook, AiOutlineEnvironment, AiOutlineMan, AiOutlineWoman } from "react-icons/ai";
 import DatePicker from 'react-datepicker';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import path from "path";
-
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoading }) => {
   const [showCamera, setShowCamera] = useState(false);

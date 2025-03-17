@@ -619,7 +619,7 @@ const AdminDashboard = () => {
                             className={`
                               px-2 py-1 rounded-full text-xs font-medium
                               ${(() => {
-                                const { tanggalFormatted, sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
+                                const { sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
                                 return sisaHari > 0 
                                   ? 'bg-purple-100 text-purple-800' 
                                   : 'bg-red-100 text-red-800';

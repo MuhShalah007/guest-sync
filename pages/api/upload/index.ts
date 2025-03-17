@@ -68,7 +68,7 @@ export default async function handler(
         await fs.rename(filePath, newPath).then(() => {
           return res.status(200).json({
             ok: true,
-            result: `${domain}/uploads/${fileName}`,
+            result: `${domain}/api/file/${fileName}`,
           });
 
         }).catch(err => {
