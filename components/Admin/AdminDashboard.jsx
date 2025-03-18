@@ -1,98 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { FiLogOut, FiUser, FiUsers, FiUserCheck, FiUserPlus, FiBriefcase, FiCalendar, FiFilter, FiX, FiPhone } from 'react-icons/fi';
 import { signOut } from 'next-auth/react';
-import { useRouter } from 'next/router';
 
-const AdminDashboard = () => {
-  const router = useRouter();
-  const [tamu, setTamu] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({
-    hariIni: {
-      total: 0,
-      totalOrang: 0,
-      wali: { L: 0, P: 0, total: 0 },
-      umum: { 
-        individu: { L: 0, P: 0, total: 0 },
-        lembaga: { L: 0, P: 0, total: 0, jumlahOrang: 0 }
-      },
-      menginap: {
-        total: 0,
-        totalOrang: 0,
-        wali: { L: 0, P: 0, total: 0 },
-        umum: {
-          individu: { L: 0, P: 0, total: 0 },
-          lembaga: { L: 0, P: 0, total: 0, jumlahOrang: 0 }
-        }
-      }
-    },
-    bulanIni: {
-      total: 0,
-      totalOrang: 0,
-      wali: { L: 0, P: 0, total: 0 },
-      umum: {
-        individu: { L: 0, P: 0, total: 0 },
-        lembaga: { L: 0, P: 0, total: 0, jumlahOrang: 0 }
-      }
-    },
-    keperluan: [],
-    total: {
-      kunjungan: 0,
-      jumlahOrang: 0
-    }
-  });
+const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, isLoading, isLoadingStats, fetchData, fetchStats }) => {
   const [filter, setFilter] = useState('semua');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [showDetailStats, setShowDetailStats] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
 
-  const fetchData = async (page = 1) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/tamu?page=${page}&limit=20`);
-      const data = await response.json();
-      setTamu(data.data);
-      setTotalPages(data.pagination.totalPages);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchStats = useCallback(async () => {
-    setIsLoadingStats(true);
-    try {
-      const response = await fetch('/api/stats');
-      if (!response.ok) {
-        throw new Error('Gagal mengambil statistik');
-      }
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setIsLoadingStats(false);
-    }
-  }, []);
-
   useEffect(() => {
-    // Fungsi untuk fetch data awal
-    const initializeDashboard = async () => {
-      await fetchData(currentPage);
-      await fetchStats();
-    };
-    
-    initializeDashboard();
-    
-    // Opsional: Setup interval untuk auto-refresh
-    const interval = setInterval(fetchStats, 300000); // Refresh setiap 5 menit
-    
+    const interval = setInterval(fetchStats, 300000);
     return () => clearInterval(interval);
   }, [currentPage]);
 
@@ -166,11 +85,10 @@ const AdminDashboard = () => {
 
   const handleLogout = async () => {
     await signOut({ 
-      redirect: false 
+      redirect: true,
+      callbackUrl: '/admin/login'
     });
-    router.push('/admin/login');
   };
-
 
   // Pagination controls
   const Pagination = () => (
@@ -544,7 +462,7 @@ const AdminDashboard = () => {
                           <img
                             src={`/api/tamu/photo?id=${item.id}`}
                             alt="Foto Selfi"
-                            className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            className="h-10 w-10 max-w-none rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={async () => {
                               if (item.hasFullPhoto) {
                                 setIsLoadingPhoto(true);
@@ -568,12 +486,12 @@ const AdminDashboard = () => {
                         <div className="flex flex-col">
                           <span className="font-medium">{item.nama}</span>
                           <a
-                            href={`https://wa.me/${item.noKontak.replace(/^0/, '62')}`}
+                            href={`https://wa.me/${item.noKontak.replace(/^0/, '62').replace(/^\+?620/, '62')}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-green-600 hover:text-green-800 flex items-center gap-1 mt-1"
                           >
-                            <FiPhone className="h-3 w-3" /> {item.noKontak}
+                            <FiPhone className="h-3 w-3" /> {item.noKontak.replace(/^0/, '+62').replace(/^\+?620/, '+62')}
                           </a>
                         </div>
                       </td>

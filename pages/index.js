@@ -57,7 +57,7 @@ export default function Home() {
       const dataToSave = {
         jenisTamu,
         nama: formData.nama,
-        noKontak: formData.noKontak,
+        noKontak: formData.noKontak.replace(/^0/, '62').replace(/^\+?620/, '62'),
         asal: formData.asal,
         keperluan: formData.keperluan,
         fotoSelfi: formData.fotoSelfi,

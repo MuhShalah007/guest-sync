@@ -73,15 +73,20 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
   const handleCapture = useCallback(async () => {
     try {
       let imageSrc = webcamRef.current.getScreenshot({
-        width: 1920,
-        height: 1080,
-        quality: 1.0
+        width: 720,
+        height: 1280,
+        quality: 0.8
       });
       if (!imageSrc) {
         throw new Error('Gagal mengambil foto');
       }
       const file = dataURItoBlob(imageSrc);
       setImageSize(file.size);
+      setFormData(prev => ({
+        ...prev,
+        fotoSelfi: imageSrc
+      }));
+      setShowCamera(false);
       
       const formData = new FormData();
       formData.append('file', file);
@@ -94,17 +99,13 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
       const result = await response.json();
       
       if (result.ok) {
-        imageSrc = result.result;
-        console.log(imageSrc)
+        setFormData(prev => ({
+          ...prev,
+          fotoSelfi: result.result
+        }));
       } else {
         console.error('Upload failed:', result.result);
       }
-      setFormData(prev => ({
-        ...prev,
-        fotoSelfi: imageSrc
-      }));
-      setShowCamera(false);
-
     } catch (error) {
       alert('Gagal mengambil foto. Pastikan kamera sudah diizinkan.');
       console.error('Error capturing photo:', error);

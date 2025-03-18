@@ -1,17 +1,92 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AdminDashboard from '../components/Admin/AdminDashboard';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const hasFetched = useRef(false);
+
+  // Minimal state
+  const [tamu, setTamu] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState({
+    hariIni: {
+      total: 0,
+      totalOrang: 0,
+      wali: { L: 0, P: 0, total: 0 },
+      umum: { 
+        individu: { L: 0, P: 0, total: 0 },
+        lembaga: { L: 0, P: 0, total: 0, jumlahOrang: 0 }
+      },
+      menginap: {
+        total: 0,
+        totalOrang: 0,
+        wali: { L: 0, P: 0, total: 0 },
+        umum: {
+          individu: { L: 0, P: 0, total: 0 },
+          lembaga: { L: 0, P: 0, total: 0, jumlahOrang: 0 }
+        }
+      }
+    },
+    bulanIni: {
+      total: 0,
+      totalOrang: 0,
+      wali: { L: 0, P: 0, total: 0 },
+      umum: {
+        individu: { L: 0, P: 0, total: 0 },
+        lembaga: { L: 0, P: 0, total: 0, jumlahOrang: 0 }
+      }
+    },
+    keperluan: [],
+    total: {
+      kunjungan: 0,
+      jumlahOrang: 0
+    }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  
+  const fetchData = (page = 1) => {
+    setIsLoading(true);
+    fetch(`/api/tamu?page=${page}&limit=20`)
+      .then((res) => res.json())
+      .then((data) => {
+        setTamu(data.data);
+        setTotalPages(data.pagination.totalPages);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setIsLoading(false);
+      });
+  };
+
+  const fetchStats = () => {
+    setIsLoadingStats(true);
+    fetch('/api/stats')
+      .then((res) => res.json())
+      .then((data) => {
+        setStats(data);
+        setIsLoadingStats(false);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setIsLoadingStats(false);
+      });
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/admin/login');
+    } else if (status === 'authenticated' && !hasFetched.current) {
+      fetchStats();
+      fetchData(currentPage);
+      hasFetched.current = true;
     }
-  }, [status, router]);
+  }, [status, currentPage, router]);
 
   if (status === 'loading') {
     return (
@@ -25,9 +100,18 @@ export default function DashboardPage() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
-
-  return <AdminDashboard />;
+  if (!session) return null;
+  return (
+    <AdminDashboard
+      tamu={tamu}
+      currentPage={currentPage}
+      setCurrentPage={setCurrentPage}
+      totalPages={totalPages}
+      stats={stats}
+      isLoading={isLoading}
+      isLoadingStats={isLoadingStats}
+      fetchData={fetchData}
+      fetchStats={fetchStats}
+    />
+  );
 }
