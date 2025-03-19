@@ -66,27 +66,33 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
     }
   };
 
-  const formatTanggalMenginap = (tanggal) => {
-      const date = new Date(tanggal);
-      const bulan = date.toLocaleString('id-ID', { month: 'short' });
-      const hari = date.getDate().toString().padStart(2, '0');
-      const tahun = date.getFullYear().toString().slice(-2);
-      const jam = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      
-      // Hitung sisa hari
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const checkoutDate = new Date(date);
-      checkoutDate.setHours(0, 0, 0, 0);
-      const sisaHari = Math.ceil((checkoutDate - today) / (1000 * 60 * 60 * 24));
-      
-      return {
-        tanggalFormatted: sisaHari === 0 
-          ? `Hari ini, ${jam}`
-          : `${hari} ${bulan} ${tahun}, ${jam}`,
-        sisaHari: sisaHari
-      };
+const formatTanggalMenginap = (tanggal) => {
+    const date = new Date(tanggal);
+    const bulan = date.toLocaleString('id-ID', { month: 'short' });
+    const hari = date.getDate().toString().padStart(2, '0');
+    const tahun = date.getFullYear().toString();
+    const jam = date.toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    }).replace(/\./g, ':').toUpperCase();
+    
+    // Hitung sisa waktu dengan mempertahankan jam
+    const now = new Date();
+    const checkoutDate = new Date(date);
+    const sisaMilliseconds = checkoutDate - now;
+    const sisaHari = Math.floor(sisaMilliseconds / (1000 * 60 * 60 * 24));
+    const isToday = now.getDate() === checkoutDate.getDate() && 
+                    now.getMonth() === checkoutDate.getMonth() && 
+                    now.getFullYear() === checkoutDate.getFullYear();
+    
+    return {
+      tanggalFormatted: isToday
+        ? `Hari ini, ${jam}`
+        : `${hari} ${bulan} ${tahun}, ${jam}`,
+      sisaHari: sisaMilliseconds > 0 ? sisaHari : -1 // Return -1 if time has passed
     };
+  };
 
   const handleLogout = async () => {
     await signOut({ 
@@ -219,7 +225,7 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
                 <div className="mt-2 text-sm bg-purple-700 px-2 py-1 rounded">
                   Termasuk {stats.hariIni.menginap.umum.individu.total} tamu menginap
                   <div className="text-xs opacity-90">
-                    {[ stats.menginap.umum.individu.L && `Lk:${stats.menginap.umum.individu.L}`, stats.menginap.umum.individu.P && `Pr:${stats.menginap.umum.individu.P}` ] .filter(Boolean).join(', ')}
+                    {[ stats.hariIni.menginap.umum.individu.L && `Lk:${stats.hariIni.menginap.umum.individu.L}`, stats.hariIni.menginap.umum.individu.P && `Pr:${stats.hariIni.menginap.umum.individu.P}` ] .filter(Boolean).join(', ')}
                   </div>
                 </div>
               )}

@@ -4,7 +4,7 @@ import { isAuthenticated } from '../../middleware/auth';
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-  // Stats API selalu membutuhkan autentikasi
+  
   const isAuth = await isAuthenticated(req);
   if (!isAuth) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -15,7 +15,6 @@ export default async function handler(req, res) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Query untuk tamu hari ini dengan select spesifik
       const tamuHariIni = await prisma.tamu.findMany({
         where: {
           createdAt: {
@@ -35,14 +34,13 @@ export default async function handler(req, res) {
           keperluan: true
         }
       });
-      console.log(tamuHariIni);
-
-      // Query untuk tamu menginap dengan select spesifik
+      
+      const now = new Date();
       const tamuMenginap = await prisma.tamu.findMany({
         where: {
           AND: [
             { menginap: true },
-            { tanggalKeluar: { gte: today } },
+            { tanggalKeluar: { gte: now } },
             { createdAt: { lt: today } }
           ]
         },
@@ -56,7 +54,6 @@ export default async function handler(req, res) {
           jumlahPerempuan: true
         }
       });
-      console.log(tamuMenginap);
 
       let stats = {
         hariIni: {
@@ -88,8 +85,7 @@ export default async function handler(req, res) {
           }
         }
       };
-
-      // Hitung statistik tamu hari ini
+      
       tamuHariIni.forEach(tamu => {
         const jumlahOrang = tamu.jenisKunjungan === 'lembaga' ? (tamu.jumlahOrang || 1) : 1;
         stats.hariIni.totalOrang += jumlahOrang;
@@ -99,7 +95,6 @@ export default async function handler(req, res) {
           if (tamu.kelamin === 'L') stats.hariIni.wali.L++;
           else if (tamu.kelamin === 'P') stats.hariIni.wali.P++;
 
-          // Jika menginap
           if (tamu.menginap) {
             stats.hariIni.menginap.total++;
             stats.hariIni.menginap.totalOrang += jumlahOrang;
@@ -113,8 +108,7 @@ export default async function handler(req, res) {
             stats.hariIni.umum.lembaga.jumlahOrang += jumlahOrang;
             if (tamu.jumlahLaki) stats.hariIni.umum.lembaga.L += parseInt(tamu.jumlahLaki);
             if (tamu.jumlahPerempuan) stats.hariIni.umum.lembaga.P += parseInt(tamu.jumlahPerempuan);
-
-            // Jika menginap
+            
             if (tamu.menginap) {
               stats.hariIni.menginap.total++;
               stats.hariIni.menginap.totalOrang += jumlahOrang;
@@ -127,8 +121,7 @@ export default async function handler(req, res) {
             stats.hariIni.umum.individu.total++;
             if (tamu.kelamin === 'L') stats.hariIni.umum.individu.L++;
             else if (tamu.kelamin === 'P') stats.hariIni.umum.individu.P++;
-
-            // Jika menginap
+            
             if (tamu.menginap) {
               stats.hariIni.menginap.total++;
               stats.hariIni.menginap.totalOrang++;
@@ -145,8 +138,7 @@ export default async function handler(req, res) {
         stats.keperluan[tamu.keperluan].jumlah++;
         stats.keperluan[tamu.keperluan].jumlahOrang += jumlahOrang;
       });
-
-      // Tambahkan statistik tamu yang masih menginap dari hari sebelumnya
+      
       tamuMenginap.forEach(tamu => {
         const jumlahOrang = tamu.jenisKunjungan === 'lembaga' ? (tamu.jumlahOrang || 1) : 1;
         stats.hariIni.total++;
@@ -201,7 +193,6 @@ export default async function handler(req, res) {
         jumlahOrang: data.jumlahOrang
       }));
 
-      // Tambahkan query untuk statistik bulan ini dengan select spesifik
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -222,8 +213,7 @@ export default async function handler(req, res) {
           jumlahPerempuan: true
         }
       });
-
-      // Hitung statistik bulanan
+      
       const statsBulanIni = {
         total: tamuBulanIni.length,
         totalOrang: 0,
@@ -255,8 +245,7 @@ export default async function handler(req, res) {
           }
         }
       });
-
-      // Update stats object
+      
       stats.bulanIni = statsBulanIni;
 
       res.status(200).json(stats);

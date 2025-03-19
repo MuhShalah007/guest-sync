@@ -10,11 +10,11 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  TZ: 'Asia/Jakarta',
   images: {
     unoptimized: true,
   },
   env: {
+    TZ: 'Asia/Jakarta',
     APP_NAME: process.env.APP_NAME || 'Buku Tamu Pesantren',
     NEXT_PUBLIC_APP_WELCOME_MESSAGE:
       process.env.APP_WELCOME_MESSAGE ||
