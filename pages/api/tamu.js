@@ -72,21 +72,30 @@ export default async function handler(req, res) {
       
       const skip = (parseInt(page) - 1) * parseInt(limit);
       let whereClause = {};
-      
       if (jenisTamu && jenisTamu !== 'semua') {
-        whereClause.jenisTamu = jenisTamu;
+        if (jenisTamu === 'lembaga') {
+          whereClause.jenisTamu = 'umum';
+          whereClause.jenisKunjungan = 'lembaga';
+        } else if (jenisTamu === 'umum') {
+          whereClause.jenisTamu = jenisTamu;
+          whereClause.jenisKunjungan = 'individu';
+        } else {
+          whereClause.jenisTamu = jenisTamu;
+        }
       }
       
-      if (startDate && endDate) {
-        whereClause.createdAt = {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        };
+      if (startDate || endDate) {
+        whereClause.createdAt = {};
+        if (startDate) {
+          whereClause.createdAt.gte = new Date(startDate);
+        }
+        if (endDate) {
+          whereClause.createdAt.lte = new Date(endDate);
+        }
       }
 
       let totalCount = 0;
       try {
-        // Ambil total count dengan error handling
         totalCount = await prisma.tamu.count({
           where: whereClause
         });
@@ -116,7 +125,7 @@ export default async function handler(req, res) {
           jumlahOrang: true,
           jumlahLaki: true,
           jumlahPerempuan: true,
-          fotoSelfi: false
+          fotoSelfi: true
         },
         orderBy: {
           createdAt: 'desc'
@@ -125,27 +134,8 @@ export default async function handler(req, res) {
         skip: skip
       });
       
-      const tamuIds = tamu.map((tamuItem) => parseInt(tamuItem.id));
-      
-      const photos = await prisma.tamu.findMany({
-        where: {
-          id: { in: tamuIds },
-        },
-        select: {
-          id: true,
-          fotoSelfi: true,
-        },
-      });
-      
-      const photoMap = new Map(photos.map((photo) => [photo.id, !!photo.fotoSelfi]));
-      
-      const processedTamu = tamu.map((tamuItem) => ({
-        ...tamuItem,
-        hasFullPhoto: photoMap.get(parseInt(tamuItem.id)) || false,
-      }));
-      
       res.status(200).json({
-        data: processedTamu,
+        data: tamu,
         pagination: {
           total: totalCount,
           page: parseInt(page),

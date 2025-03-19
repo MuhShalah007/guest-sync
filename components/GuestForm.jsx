@@ -650,7 +650,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                 className="space-y-2"
               >
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                  Tanggal Keluar <span className="text-red-500 ml-1">*</span>
+                  Tanggal & Waktu Keluar <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
@@ -658,9 +658,13 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
                     selected={formData.tanggalKeluar ? new Date(formData.tanggalKeluar) : null}
                     onChange={handleDateChange}
                     minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
-                    dateFormat="dd/MM/yyyy"
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
+                    timeCaption="Waktu"
                     className="w-full outline-none pl-10 p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                    placeholderText="Pilih tanggal keluar"
+                    placeholderText="Pilih tanggal dan waktu keluar"
                     required={formData.menginap}
                   />
                 </div>

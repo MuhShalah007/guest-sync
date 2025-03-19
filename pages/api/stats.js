@@ -35,6 +35,7 @@ export default async function handler(req, res) {
           keperluan: true
         }
       });
+      console.log(tamuHariIni);
 
       // Query untuk tamu menginap dengan select spesifik
       const tamuMenginap = await prisma.tamu.findMany({
@@ -55,6 +56,7 @@ export default async function handler(req, res) {
           jumlahPerempuan: true
         }
       });
+      console.log(tamuMenginap);
 
       let stats = {
         hariIni: {

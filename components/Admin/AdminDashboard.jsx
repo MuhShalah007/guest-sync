@@ -16,8 +16,8 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
   }, [currentPage]);
 
   useEffect(() => {
-    if (filter !== 'semua' || startDate || endDate) {
-      fetchData(1); // Reset ke halaman pertama saat filter berubah
+    if (filter || startDate || endDate) {
+      fetchData(1, filter, startDate, endDate); // Reset ke halaman pertama saat filter berubah
     }
   }, [filter, startDate, endDate]);
 
@@ -67,21 +67,26 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
   };
 
   const formatTanggalMenginap = (tanggal) => {
-    const date = new Date(tanggal);
-    const bulan = date.toLocaleString('id-ID', { month: 'short' });
-    const hari = date.getDate().toString().padStart(2, '0');
-    const tahun = date.getFullYear().toString().slice(-2);
-    
-    // Hitung sisa hari
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const sisaHari = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
-    
-    return {
-      tanggalFormatted: `${hari} ${bulan} ${tahun}`,
-      sisaHari: sisaHari
+      const date = new Date(tanggal);
+      const bulan = date.toLocaleString('id-ID', { month: 'short' });
+      const hari = date.getDate().toString().padStart(2, '0');
+      const tahun = date.getFullYear().toString().slice(-2);
+      const jam = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      
+      // Hitung sisa hari
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const checkoutDate = new Date(date);
+      checkoutDate.setHours(0, 0, 0, 0);
+      const sisaHari = Math.ceil((checkoutDate - today) / (1000 * 60 * 60 * 24));
+      
+      return {
+        tanggalFormatted: sisaHari === 0 
+          ? `Hari ini, ${jam}`
+          : `${hari} ${bulan} ${tahun}, ${jam}`,
+        sisaHari: sisaHari
+      };
     };
-  };
 
   const handleLogout = async () => {
     await signOut({ 
@@ -390,12 +395,13 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="semua">Semua</option>
+              <option value="lembaga">Lembaga</option>
               <option value="wali">Wali</option>
               <option value="umum">Umum</option>
             </select>
           </div>
           
-          {/* <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
             <input
               type="date"
@@ -403,9 +409,9 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div> */}
+          </div>
           
-          {/* <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
             <input
               type="date"
@@ -413,7 +419,7 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-          </div> */}
+          </div>
         </div>
         
         {isLoading ? (
@@ -458,22 +464,26 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
                         {index + 1}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
-                        {item.hasFullPhoto ? (
+                        {item.fotoSelfi ? (
                           <img
-                            src={`/api/tamu/photo?id=${item.id}`}
+                            src={item.fotoSelfi}
                             alt="Foto Selfi"
                             className="h-10 w-10 max-w-none rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={async () => {
-                              if (item.hasFullPhoto) {
+                              if (item.fotoSelfi) {
                                 setIsLoadingPhoto(true);
                                 try {
-                                    setSelectedPhoto(`/api/tamu/photo?id=${item.id}`);
+                                    setSelectedPhoto(item.fotoSelfi);
                                 } catch (error) {
                                   console.error('Error:', error);
                                 } finally {
                                   setIsLoadingPhoto(false);
                                 }
                               }
+                            }}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://www.gravatar.com/avatar/?d=mp";
                             }}
                           />
                         ) : (
@@ -491,7 +501,7 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
                             rel="noopener noreferrer"
                             className="text-xs text-green-600 hover:text-green-800 flex items-center gap-1 mt-1"
                           >
-                            <FiPhone className="h-3 w-3" /> {item.noKontak.replace(/^0/, '+62').replace(/^\+?620/, '+62')}
+                            <FiPhone className="h-3 w-3" /> {item.noKontak.replace(/^0/, '+62').replace(/^\+?620?/, '+62')}
                           </a>
                         </div>
                       </td>
@@ -538,18 +548,25 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
                               px-2 py-1 rounded-full text-xs font-medium
                               ${(() => {
                                 const { sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
-                                return sisaHari > 0 
-                                  ? 'bg-purple-100 text-purple-800' 
-                                  : 'bg-red-100 text-red-800';
+                                if (sisaHari > 0) {
+                                  return 'bg-purple-100 text-purple-800';
+                                } else if (sisaHari === 0) {
+                                  return 'bg-purple-100 text-purple-800';
+                                } else {
+                                  return 'bg-red-100 text-red-800';
+                                }
                               })()}
                             `}
                           >
-                            {(() => {
-                              const { tanggalFormatted, sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
-                              return sisaHari > 0 
-                                ? `Ya (s/d ${tanggalFormatted} • ${sisaHari} hari lagi)` 
-                                : `Ya (s/d ${tanggalFormatted} • sudah lewat)`;
-                            })()}
+                            
+                                      {(() => {
+                                          const { tanggalFormatted, sisaHari } = formatTanggalMenginap(item.tanggalKeluar);
+                                          return sisaHari > 0 
+                                            ? `Ya (s/d ${tanggalFormatted} • ${sisaHari} hari lagi)` 
+                                            : sisaHari === 0
+                                              ? `Ya (s/d ${tanggalFormatted})`
+                                              : `Ya (s/d ${tanggalFormatted} • sudah lewat)`;
+                                      })()}
                           </span>
                         ) : (
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -600,8 +617,12 @@ const AdminDashboard = ({ tamu, currentPage, setCurrentPage, totalPages, stats, 
             ) : (
               <img
                 src={selectedPhoto}
-                alt="Foto Selfi"
                 className="w-full h-full object-contain"
+                alt="Foto Selfi"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://www.gravatar.com/avatar/?d=mp&s=360";
+                }}
               />
             )}
           </div>

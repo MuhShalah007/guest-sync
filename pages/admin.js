@@ -8,7 +8,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const hasFetched = useRef(false);
 
-  // Minimal state
   const [tamu, setTamu] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -49,9 +48,21 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   
-  const fetchData = (page = 1) => {
+  const fetchData = (page = 1, filter = 'semua', startDate = null, endDate = null) => {
     setIsLoading(true);
-    fetch(`/api/tamu?page=${page}&limit=20`)
+    let url = `/api/tamu?page=${page}&limit=20`;
+    
+    if (filter !== 'semua') {
+      url += `&jenisTamu=${filter}`;
+    }
+    if (startDate) {
+      url += `&startDate=${startDate}`;
+    }
+    if (endDate) {
+      url += `&endDate=${endDate}`;
+    }
+    
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         setTamu(data.data);
