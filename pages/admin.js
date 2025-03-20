@@ -114,6 +114,7 @@ export default function DashboardPage() {
   if (!session) return null;
   return (
     <AdminDashboard
+      session={session}
       tamu={tamu}
       currentPage={currentPage}
       setCurrentPage={setCurrentPage}

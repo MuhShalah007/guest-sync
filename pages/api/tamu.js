@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   if (!isPublic) {
     const isAuth = await isAuthenticated(req);
     if (!isAuth) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
     }
   }
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       res.status(200).json(savedTamu);
     } catch (error) {
       console.error('Error saving data:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ ok: false, error_code: 500, description: error.message });
     }
   } else if (req.method === 'GET') {
     try {
@@ -146,7 +146,7 @@ export default async function handler(req, res) {
 
     } catch (error) {
       console.error('Error fetching data:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ ok: false, error_code: 500, description: error.message });
     }
   } else {
     res.setHeader('Allow', ['GET', 'POST']);

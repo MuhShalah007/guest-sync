@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   
   const isAuth = await isAuthenticated(req);
   if (!isAuth) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
   }
 
   if (req.method === 'GET') {
@@ -251,7 +251,7 @@ export default async function handler(req, res) {
       res.status(200).json(stats);
     } catch (error) {
       console.error('Error fetching stats:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ ok: false, error_code: 500, description: error.message });
     }
   } else {
     res.setHeader('Allow', ['GET']);

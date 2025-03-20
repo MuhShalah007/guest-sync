@@ -80,17 +80,27 @@ export default function GalleryPage({ images, error }) {
 	
 		return (
       <>
-        <a
-          href={`/tamu/${image.linkedProfile}`}
-          className={image.linkedProfile ? "text-red-500 hover:text-red-700" : "text-blue-500 hover:text-blue-700"}
-          title="Linked to database record"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          {image.linkedProfile && (isHovered ? <PiLinkBreakBold /> : <PiLinkBold />)}
-          {!image.linkedProfile && (isHovered ? <PiLinkBold /> : <PiLinkBreakBold />)}
-        </a>
-        { !image.linkedProfile && (
+        <div className="relative">
+          <a
+            href={`/tamu/${image.linkedProfile?.id}`}
+            className={image.linkedProfile ? "text-red-500 hover:text-red-700" : "text-blue-500 hover:text-blue-700"}
+            title="Linked to database record"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {image.linkedProfile && (isHovered ? <PiLinkBreakBold /> : <PiLinkBold />)}
+            {!image.linkedProfile && (isHovered ? <PiLinkBold /> : <PiLinkBreakBold />)}
+          </a>
+          {isHovered && image.linkedProfile && (
+            <div className="absolute top-6 right-0 w-48 p-2 rounded shadow-lg bg-gradient-to-b from-black/80 to-transparent text-white text-sm z-10">
+              <p>Name: {image.linkedProfile.nama}</p>
+              <p>Contact: {image.linkedProfile.noKontak}</p>
+              <p>Origin: {image.linkedProfile.asal}</p>
+              <p>Visit Type: {image.linkedProfile.jenisKunjungan}</p>
+            </div>
+          )}
+        </div>
+        {!image.linkedProfile && (
           <button
             onClick={() => handleDelete(image.filename)}
             className="text-red-500 hover:text-red-700"
@@ -237,4 +247,17 @@ export default function GalleryPage({ images, error }) {
       )}
     </div>
   );
+}
+GalleryPage.auth = {
+  role: "ADMIN",
+  loading: (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg text-center space-y-4">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <h2 className="text-xl font-semibold text-gray-700">Loading Dashboard</h2>
+        <p className="text-gray-500">Please wait a moment...</p>
+      </div>
+    </div>
+  ),
+  unauthorized: "/admin/login",
 }

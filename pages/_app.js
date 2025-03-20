@@ -10,4 +10,13 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   );
 }
 
+function Auth({ children }) {
+  const { status } = useSession({ required: true })
+
+  if (status === "loading") {
+    return <div>Loading...</div>
+  }
+
+  return children
+}
 export default MyApp 

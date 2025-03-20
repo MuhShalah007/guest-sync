@@ -7,14 +7,14 @@ export default async function handler(req, res) {
   // Cek autentikasi
   const isAuth = await isAuthenticated(req);
   if (!isAuth) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
   }
 
   if (req.method === 'GET') {
     const { id } = req.query;
 
     if (!id) {
-      return res.status(400).json({ error: 'ID tidak ditemukan' });
+      return res.status(400).json({ ok: false, error_code: 400, description:'ID tidak ditemukan' });
     }
 
     try {
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   
         if (!tamu) {
           // Jika tamu tidak ditemukan, kembalikan error 404
-          return res.status(404).json({ error: 'Tamu tidak ditemukan' });
+          return res.status(404).json({ ok: false, error_code: 404, description:'Tamu tidak ditemukan' });
         }
       // Hapus data tamu berdasarkan ID
       const deletedTamu = await prisma.tamu.delete({
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error('Error deleting tamu:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ ok: false, error_code: 500, description: error.message });
     }
   } else {
     res.setHeader('Allow', ['GET']);
