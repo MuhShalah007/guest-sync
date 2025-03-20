@@ -3,33 +3,68 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // atau "mysql" atau "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String
+  role     Role     @default(PANITIA)
+  name     String?
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  HUMAS
+  PANITIA
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tamu        Tamu[]
+}
+
+enum Keperluan {
+  UMUM
+  EVENT
+}
+
 model Tamu {
-  id           Int      @id @default(autoincrement())
-  jenisTamu    String   // 'umum' atau 'wali'
-  nama         String
-  noKontak     String
-  asal         String
-  kelamin      String   // 'L', 'P', atau 'G' untuk group
-  keperluan    String
-  fotoSelfi    String  // path ke file foto
-  createdAt    DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  jenisTamu       String   // 'umum' atau 'wali'
+  nama            String
+  noKontak        String
+  asal            String
+  kelamin         String   // 'L', 'P', atau 'G' untuk group
+  jenisKeperluan  Keperluan   @default(UMUM) // 'UMUM' atau 'EVENT'
+  keperluan       String?  // For manual input (UMUM)
+  eventId         Int?     // For event selection
+  event           Event?   @relation(fields: [eventId], references: [id])
+  fotoSelfi       String   // path ke file foto
+  createdAt       DateTime @default(now())
   
   // Fields untuk Tamu Wali
-  waliDari     String?
-  kelas        String?
+  waliDari        String?
+  kelas           String?
   
   // Fields untuk Tamu Umum
-  jenisKunjungan String? // 'lembaga' atau 'individu'
-  namaLembaga   String?
-  jumlahOrang   Int?
-  jumlahLaki    Int?    // Jumlah laki-laki untuk lembaga
-  jumlahPerempuan Int?  // Jumlah perempuan untuk lembaga
+  jenisKunjungan  String?  // 'lembaga' atau 'individu'
+  namaLembaga     String?
+  jumlahOrang     Int?
+  jumlahLaki      Int?     // Jumlah laki-laki untuk lembaga
+  jumlahPerempuan Int?     // Jumlah perempuan untuk lembaga
   
-  // Fields untuk menginap
-  menginap      Boolean @default(false)
-  tanggalKeluar DateTime?
-} 
+  // Fields untuk Menginap
+  menginap        Boolean  @default(false)
+  tanggalKeluar   DateTime?
+}
