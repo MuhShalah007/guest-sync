@@ -26,7 +26,6 @@ const AdminLogin = () => {
         setError('Username atau password salah!');
         setTimeout(() => setError(''), 3000);
       } else {
-        // Redirect ke dashboard admin jika login berhasil
         router.push('/admin');
       }
     } catch (error) {

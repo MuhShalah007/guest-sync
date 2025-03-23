@@ -1,11 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import { isAdmin } from '../../middleware/auth';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';                                                
 
 const prisma = new PrismaClient();
 
-export default async function handler(req, res) {
-  // Use the middleware to check authentication
+export default async function handler(req, res) { 
   const isAuthorized = await isAdmin(req);
   
   if (!isAuthorized) {
@@ -14,7 +13,15 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
+      const { role } = req.query;
+      let whereClause = {};
+
+      if (role) {
+        whereClause.role = role;
+      }
+      
       const users = await prisma.user.findMany({
+        where: whereClause,
         select: {
           id: true,
           username: true,
@@ -27,7 +34,7 @@ export default async function handler(req, res) {
     } catch (error) {
       return res.status(500).json({ ok: false, error_code: 500, description: error.message });
     }
-  } 
+  }
   
   if (req.method === 'POST') {
     try {

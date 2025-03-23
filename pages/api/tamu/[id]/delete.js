@@ -1,16 +1,16 @@
 import { PrismaClient } from '@prisma/client';
-import { isAuthenticated } from '../../../middleware/auth';
+import { isAuthenticated } from '../../../../middleware/auth';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
-  // Cek autentikasi
   const isAuth = await isAuthenticated(req);
-  if (!isAuth) {
-    return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
+  
+  if (!isAuth || isAuth.role !== 'ADMIN') {
+    return res.status(401).json({ ok: false, error_code: 401, description: 'Unauthorized' });
   }
 
-  if (req.method === 'GET') {
+  if (req.method === 'DELETE') {
     const { id } = req.query;
 
     if (!id) {
@@ -18,22 +18,20 @@ export default async function handler(req, res) {
     }
 
     try {
-        const tamu = await prisma.tamu.findUnique({
-          where: { id: parseInt(id) },
-        });
-  
-        if (!tamu) {
-          // Jika tamu tidak ditemukan, kembalikan error 404
-          return res.status(404).json({ ok: false, error_code: 404, description:'Tamu tidak ditemukan' });
-        }
-      // Hapus data tamu berdasarkan ID
+      const tamu = await prisma.tamu.findUnique({
+        where: { id: parseInt(id) }
+      });
+
+      if (!tamu) {         
+        return res.status(404).json({ ok: false, error_code: 404, description:'Tamu tidak ditemukan' });
+      }
+     
       const deletedTamu = await prisma.tamu.delete({
         where: {
           id: parseInt(id),
         },
       });
-
-      // Kirim respons berhasil
+     
       res.status(200).json({
         message: 'Tamu berhasil dihapus',
         data: deletedTamu,
@@ -43,7 +41,7 @@ export default async function handler(req, res) {
       res.status(500).json({ ok: false, error_code: 500, description: error.message });
     }
   } else {
-    res.setHeader('Allow', ['GET']);
+    res.setHeader('Allow', ['DELETE']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

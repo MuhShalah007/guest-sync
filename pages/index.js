@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import GuestForm from '../components/GuestForm';
+import React, { useState, useEffect } from 'react';
+import GuestForm from '../components/guestform';
 import Footer from '../components/Footer';
 import { motion } from 'framer-motion';
 import { FiUsers, FiUserCheck } from 'react-icons/fi';
@@ -7,6 +7,7 @@ import { FiUsers, FiUserCheck } from 'react-icons/fi';
 export default function Home() {
   const [jenisTamu, setJenisTamu] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [events, setEvents] = useState([]);
   const [formData, setFormData] = useState({
     nama: '',
     noKontak: '',
@@ -24,6 +25,59 @@ export default function Home() {
     menginap: false,
     tanggalKeluar: ''
   });
+  const resetForm = () => {
+    setJenisTamu('');
+    setFormData({
+      nama: '',
+      noKontak: '',
+      asal: '',
+      kelamin: '',
+      keperluan: '',
+      fotoSelfi: '',
+      waliDari: '',
+      kelas: '',
+      jenisKunjungan: '',
+      namaLembaga: '',
+      jumlahOrang: '',
+      jumlahLaki: '',
+      jumlahPerempuan: '',
+      menginap: false,
+      eventId: null,
+      tanggalKeluar: ''
+    })
+  };
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events?active=true', {
+          signal: abortController.signal
+        });
+        const data = await response.json();
+        const eventsArray = Array.isArray(data) ? data : [];
+        
+        setEvents(eventsArray.filter(event => {
+          const eventDate = new Date(event.startDate);
+          const endDate = new Date(event.endDate);
+          const today = new Date();
+          const tomorrow = eventDate.setDate(today.getDate() + 1);
+          return tomorrow >= today || endDate >= today;
+        }));
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          console.error('Error fetching events:', error);
+        }
+      }
+    };
+
+    fetchEvents();
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -188,30 +242,12 @@ export default function Home() {
             transition={{ duration: 0.5 }}
           >
             <GuestForm
+              events={events}
               jenisTamu={jenisTamu}
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
-              onCancel={() => {
-                setJenisTamu(''); 
-                setFormData({
-                  nama: '',
-                  noKontak: '',
-                  asal: '',
-                  kelamin: '',
-                  keperluan: '',
-                  fotoSelfi: '',
-                  waliDari: '',
-                  kelas: '',
-                  jenisKunjungan: '',
-                  namaLembaga: '',
-                  jumlahOrang: '',
-                  jumlahLaki: '',
-                  jumlahPerempuan: '',
-                  menginap: false,
-                  tanggalKeluar: ''
-                });
-              }}
+              onCancel={resetForm}
               isLoading={isLoading}
             />
           </motion.div>
@@ -221,4 +257,4 @@ export default function Home() {
     <Footer />
   </>
   );
-} 
+}

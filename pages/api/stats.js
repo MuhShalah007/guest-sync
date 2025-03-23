@@ -12,16 +12,31 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
+      let eventIds = [];
+      if (isAuth.role === 'PANITIA') {
+        const panitiaEvents = await prisma.eventPanitia.findMany({
+          where: { userId: isAuth.id },
+          select: { eventId: true }
+        });
+        eventIds = panitiaEvents.map(pe => pe.eventId);
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      const whereClause = {
+        createdAt: {
+          gte: today,
+          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+        }
+      };
+
+      if (isAuth.role === 'PANITIA') {
+        whereClause.eventId = { in: eventIds };
+      }
+
       const tamuHariIni = await prisma.tamu.findMany({
-        where: {
-          createdAt: {
-            gte: today,
-            lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-          }
-        },
+        where: whereClause,
         select: {
           id: true,
           jenisTamu: true,
@@ -31,7 +46,13 @@ export default async function handler(req, res) {
           jumlahLaki: true,
           jumlahPerempuan: true,
           menginap: true,
-          keperluan: true
+          keperluan: true,
+          eventId: true,
+          event: {
+            select: {
+              name: true
+            }
+          }
         }
       });
       
@@ -51,7 +72,13 @@ export default async function handler(req, res) {
           jenisKunjungan: true,
           jumlahOrang: true,
           jumlahLaki: true,
-          jumlahPerempuan: true
+          jumlahPerempuan: true,
+          eventId: true,
+          event: {
+            select: {
+              name: true
+            }
+          }
         }
       });
 
@@ -133,7 +160,12 @@ export default async function handler(req, res) {
         }
         
         if (!stats.keperluan[tamu.keperluan]) {
-          stats.keperluan[tamu.keperluan] = { jumlah: 0, jumlahOrang: 0 };
+          stats.keperluan[tamu.keperluan] = { 
+            jumlah: 0, 
+            jumlahOrang: 0,
+            eventName: tamu.event?.name || null,
+            eventId: tamu.eventId || null
+          };
         }
         stats.keperluan[tamu.keperluan].jumlah++;
         stats.keperluan[tamu.keperluan].jumlahOrang += jumlahOrang;
@@ -187,8 +219,10 @@ export default async function handler(req, res) {
         }
       });
       
-      stats.keperluan = Object.entries(stats.keperluan).map(([keperluan, data]) => ({
+      stats.keperluan = Object.entries(stats.keperluan).map(([keperluan,data]) => ({
         keperluan,
+        eventId: data.eventId || null,
+        eventName: data.eventName || null,
         jumlah: data.jumlah,
         jumlahOrang: data.jumlahOrang
       }));
@@ -257,4 +291,4 @@ export default async function handler(req, res) {
     res.setHeader('Allow', ['GET']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-} 
+}

@@ -7,7 +7,7 @@ import DatePicker from 'react-datepicker';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
-const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoading }) => {
+const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoading, events }) => {
   const [showCamera, setShowCamera] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });  
   const [imageSize, setImageSize] = useState(0);
@@ -16,6 +16,7 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
   const [jumlahPerempuan, setJumlahPerempuan] = useState(0);
   const [validasiJumlah, setValidasiJumlah] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeTab, setActiveTab] = useState('keperluan');
 
   useEffect(() => {
     document.body.style.backgroundColor = '#f7f9fc';
@@ -41,8 +42,8 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
   };
 
   const formatFileSize = (bytes) => {
-    const mb = bytes / (1024 * 1024); // Convert bytes to MB
-    return mb.toFixed(2); // Return with 2 decimal places
+    const mb = bytes / (1024 * 1024);
+    return mb.toFixed(2);
   };
 
   const handleDateChange = useCallback((date) => {
@@ -246,7 +247,6 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
         >
           {jenisTamu === 'wali' ? 'Form Tamu Wali' : 'Form Tamu Umum'}
         </motion.h2>
-
         <div className="space-y-4">
           {/* Jenis Kelamin */}
           <div>
@@ -600,18 +600,112 @@ const GuestForm = ({ jenisTamu, formData, setFormData, onSubmit, onCancel, isLoa
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-              Keperluan <span className="text-red-500 ml-1">*</span>
-            </label>
-            <textarea
-              name="keperluan"
-              value={formData.keperluan}
-              onChange={handleChange}
-              className="w-full outline-none p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-              rows="3"
-              placeholder="Tuliskan keperluan kunjungan Anda..."
-              required
-            ></textarea>
+            <div className="relative flex space-x-1 before:absolute before:bottom-0 before:w-full before:h-[1px] before:bg-gray-200">
+              <button
+                type="button"
+                onClick={() => setActiveTab('keperluan')}
+                className={`
+                  relative py-2 px-6
+                  before:absolute before:left-0 before:right-0 before:top-0 before:bottom-0
+                  before:skew-x-[20deg] before:border before:border-gray-200
+                  before:transition-colors before:duration-200
+                  ${activeTab === 'keperluan' 
+                    ? 'text-blue-600 before:bg-white before:border-b-0'
+                    : 'text-gray-500 hover:text-gray-700 before:bg-gray-50'
+                  }
+                `}
+              >
+                <span className="relative z-10">Keperluan Umum</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('acara')}
+                className={`
+                  relative py-2 px-6
+                  before:absolute before:left-0 before:right-0 before:top-0 before:bottom-0
+                  before:skew-x-[20deg] before:border before:border-gray-200
+                  before:transition-colors before:duration-200
+                  ${activeTab === 'acara'
+                    ? 'text-blue-600 before:bg-white before:border-b-0'
+                    : 'text-gray-500 hover:text-gray-700 before:bg-gray-50'
+                  }
+                `}
+              >
+                <span className="relative z-10">Acara</span>
+              </button>
+            </div>
+            <div className="p-4 border border-t-0 rounded-b-lg bg-white">
+              {activeTab === 'keperluan' ? (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Keperluan <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    name="keperluan"
+                    value={formData.keperluan}
+                    onChange={handleChange}
+                    className="w-full outline-none p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    rows="3"
+                    placeholder="Tuliskan keperluan kunjungan Anda..."
+                    required={!formData.eventId}
+                  ></textarea>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Pilih Acara <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {events.map((event) => (
+                      <label
+                        key={event.id}
+                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors duration-200 ${
+                          formData.eventId === event.id.toString()
+                            ? 'bg-blue-50 border-blue-500'
+                            : 'hover:bg-gray-50'
+                        }`}
+                      > 
+                        <input
+                          type="radio"
+                          name="eventId"
+                          value={event.id}
+                          checked={formData.eventId === event.id.toString()}
+                          onChange={(e) => {
+                            const selectedEvent = events.find(ev => ev.id.toString() === e.target.value);
+                            if (selectedEvent) {
+                              setFormData(prev => ({
+                                ...prev,
+                                eventId: e.target.value,
+                                jenisKeperluan: 'EVENT',
+                                keperluan: `Menghadiri acara: ${selectedEvent.name}`
+                              }));
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <div className="ml-2">
+                          <div className="font-medium">{event.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(event.startDate).toLocaleDateString('id-ID', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                            {event.endDate && (' - ' + new Date(event.endDate).toLocaleDateString('id-ID', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            }))}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
 
           {/* Opsi Menginap */}

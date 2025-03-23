@@ -12,22 +12,15 @@ export const config = {
 }
 
 export default async function handler(req, res) {
-  // Cek apakah ini adalah public route
-  const isPublic = await isPublicRoute(req);
-  
-  // Jika bukan public route, cek autentikasi
-  if (!isPublic) {
-    const isAuth = await isAuthenticated(req);
-    if (!isAuth) {
-      return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
-    }
+  const isAuth = await isAuthenticated(req);
+  if (!isAuth && !isPublicRoute(req)) {
+    return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
   }
 
   if (req.method === 'POST') {
     try {
       const data = req.body;
       
-      // Validasi ukuran foto
       if (data.fotoSelfi) {
         const base64Length = data.fotoSelfi.length;
         const sizeInMb = (base64Length * (3/4)) / (1024*1024);
@@ -51,6 +44,28 @@ export default async function handler(req, res) {
         data.jumlahLaki = parseInt(data.jumlahLaki) || 0;
         data.jumlahPerempuan = parseInt(data.jumlahPerempuan) || 0;
       }
+
+      if (data.eventId) {
+        const event = await prisma.event.findUnique({
+          where: {
+            id: data.eventId
+          }
+        });
+
+        if (!event) {
+          return res.status(404).json({
+            error: 'Event tidak ditemukan'
+          });
+        }
+
+        if (!event.isActive) {
+          return res.status(400).json({
+            error: 'Event sudah tidak aktif'
+          });
+        }
+
+        data.eventName = event.name;
+      }
       
       const savedTamu = await prisma.tamu.create({
         data
@@ -65,13 +80,24 @@ export default async function handler(req, res) {
       const { 
         jenisTamu, 
         startDate, 
-        endDate, 
-        page = 1, 
-        limit = 20 // Batasi 20 data per halaman
+        endDate,
+        eventId,
+        page = 1,
+        limit = 20 
       } = req.query;
       
       const skip = (parseInt(page) - 1) * parseInt(limit);
       let whereClause = {};
+      let eventIds = [];
+      
+      if (isAuth && isAuth.role === 'PANITIA') {
+        const panitiaEvents = await prisma.eventPanitia.findMany({
+          where: { userId: isAuth.id },
+          select: { eventId: true }
+        });
+        eventIds = panitiaEvents.map(pe => pe.eventId);
+        whereClause.eventId = { in: eventIds };
+      }
       if (jenisTamu && jenisTamu !== 'semua') {
         if (jenisTamu === 'lembaga') {
           whereClause.jenisTamu = 'umum';
@@ -94,6 +120,14 @@ export default async function handler(req, res) {
         }
       }
 
+      if (eventId) {
+        whereClause.eventId = parseInt(eventId);
+      }
+      
+      if (req.query.unassigned === 'true') {
+        whereClause.eventId = null;
+      }
+
       let totalCount = 0;
       try {
         totalCount = await prisma.tamu.count({
@@ -103,8 +137,7 @@ export default async function handler(req, res) {
         console.error('Error getting count:', countError);
         totalCount = 0;
       }
-
-      // Ambil data dengan pagination dan select spesifik
+  
       const tamu = await prisma.tamu.findMany({
         where: whereClause,
         select: {
@@ -125,7 +158,13 @@ export default async function handler(req, res) {
           jumlahOrang: true,
           jumlahLaki: true,
           jumlahPerempuan: true,
-          fotoSelfi: true
+          fotoSelfi: true,
+          eventId: true,
+          event: {
+            select: {
+              name: true
+            }
+          }
         },
         orderBy: {
           createdAt: 'desc'
