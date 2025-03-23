@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import GuestForm from '../components/guestform';
+import GuestForm from '../components/GuestForm';
 import Footer from '../components/Footer';
 import { motion } from 'framer-motion';
 import { FiUsers, FiUserCheck } from 'react-icons/fi';
