@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FiUsers, FiCalendar, FiMenu, FiX, FiHome, FiLogOut } from 'react-icons/fi';
-import { signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function AdminLayout({ children, userRole }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { data: session } = useSession();
   const router = useRouter();
 
   const menuItems = [
@@ -32,6 +33,33 @@ export default function AdminLayout({ children, userRole }) {
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: '/admin/login' });
   };
+
+  useEffect(() => {
+    if (session?.user && 'serviceWorker' in navigator && 'Notification' in window) {
+      const setupPushNotification = async () => {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') return;
+
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+          });
+
+          await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscription)
+          });
+        } catch (error) {
+          console.error('Push notification setup failed:', error);
+        }
+      };
+
+      setupPushNotification();
+    }
+  }, [session]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex">

@@ -6,6 +6,7 @@ import { FiLogOut, FiTrash2, FiUser, FiUsers, FiUserCheck, FiUserPlus, FiBriefca
 import { signOut } from 'next-auth/react';
 
 export default function DashboardPage() {
+  let currentFetch = 0;
   const { data: session, status } = useSession();
   const router = useRouter();
   const hasFetched = useRef(false);
@@ -49,6 +50,15 @@ export default function DashboardPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [filter, setFilter] = useState('semua');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showDetailStats, setShowDetailStats] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [panitiaEvents, setPanitiaEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState('');
   
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this visitor?')) return;
@@ -71,6 +81,8 @@ export default function DashboardPage() {
     }
 };
   const fetchData = (page = 1, filter = 'semua', startDate = null, endDate = null, eventId = null) => {
+    currentFetch++;
+    console.log('fetch: ' + currentFetch);
     setIsLoading(true);
     let url = `/api/tamu?page=${page}&limit=20`;
     
@@ -90,25 +102,30 @@ export default function DashboardPage() {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        setTamu(data.data);
-        setTotalPages(data.pagination.totalPages);
+        if (!data.data) {
+          throw new Error(data.message || 'Failed to fetch data');
+        }
+        setTamu(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
         setIsLoading(false);
       })
       .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error fetching data:', error);
         setIsLoading(false);
+        setTamu([]);
+        setTotalPages(1);
       });
   };
-
   const fetchStats = () => {
     setIsLoadingStats(true);
     fetch('/api/stats')
       .then((res) => res.json())
       .then((data) => {
-        if(!data.hariIni){
-          throw Error(data);
+        if(data.hariIni){
+          setStats(data);
+        }else{
+          throw new Error(data.message || 'Failed to fetch data');
         }
-        setStats(data);
         setIsLoadingStats(false);
       })
       .catch((error) => {
@@ -122,19 +139,15 @@ export default function DashboardPage() {
       router.push('/admin/login');
     } else if (status === 'authenticated' && !hasFetched.current) {
       fetchStats();
-      fetchData(currentPage);
+      fetchData(currentPage, filter, startDate, endDate, selectedEvent);
       hasFetched.current = true;
     }
-  }, [status, currentPage, router]);
-  const [filter, setFilter] = useState('semua');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [showDetailStats, setShowDetailStats] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [panitiaEvents, setPanitiaEvents] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState('');
+  }, [status]);
+  useEffect(() => {
+    if (status === 'authenticated' && hasFetched.current) {
+      fetchData(currentPage, filter, startDate, endDate, selectedEvent);
+    }
+  }, [currentPage]); 
   useEffect(() => {
     const fetchPanitiaEvents = async () => {
       if (session?.user?.role === 'PANITIA') {
@@ -269,7 +282,7 @@ export default function DashboardPage() {
       callbackUrl: '/admin/login'
     });
   };
-  
+
   const Pagination = () => (
     <div className="mt-4 flex flex-wrap justify-center gap-2 px-4">
       <button
@@ -378,12 +391,12 @@ export default function DashboardPage() {
                 <FiUsers className="text-2xl" />
                 <h3 className="font-bold text-lg">Total Kunjungan Hari Ini</h3>
               </div>
-              <p className="text-3xl font-bold">{stats.hariIni.total}</p>
-              <p className="text-sm opacity-90">Total Orang: {stats.hariIni.totalOrang}</p>
-              {stats.hariIni.menginap.total > 0 && (
+              <p className="text-3xl font-bold">{stats?.hariIni?.total}</p>
+              <p className="text-sm opacity-90">Total Orang: {stats?.hariIni?.totalOrang}</p>
+              {stats?.hariIni?.menginap?.total > 0 && (
                 <p className="text-sm mt-2 bg-blue-700 px-2 py-1 rounded">
-                  Termasuk {stats.hariIni.menginap.total} tamu menginap 
-                  ({stats.hariIni.menginap.totalOrang} orang)
+                  Termasuk {stats?.hariIni?.menginap?.total} tamu menginap 
+                  ({stats?.hariIni?.menginap?.totalOrang} orang)
                 </p>
               )}
             </div>
@@ -395,16 +408,16 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-sm opacity-90">Laki-laki: {stats.hariIni.wali.L}</p>
-                  <p className="text-sm opacity-90">Perempuan: {stats.hariIni.wali.P}</p>
+                  <p className="text-sm opacity-90">Laki-laki: {stats?.hariIni?.wali.L}</p>
+                  <p className="text-sm opacity-90">Perempuan: {stats?.hariIni?.wali.P}</p>
                 </div>
-                <p className="text-3xl font-bold">{stats.hariIni.wali.total}</p>
+                <p className="text-3xl font-bold">{stats?.hariIni?.wali.total}</p>
               </div>
-              {stats.hariIni.menginap.wali.total > 0 && (
+              {stats?.hariIni?.menginap?.wali.total > 0 && (
                 <div className="mt-2 text-sm bg-green-700 px-2 py-1 rounded">
-                  Termasuk {stats.hariIni.menginap.wali.total} tamu menginap
+                  Termasuk {stats?.hariIni?.menginap?.wali.total} tamu menginap
                   <div className="text-xs opacity-90">
-                    {[ stats.hariIni.menginap.wali.L && `Lk:${stats.hariIni.menginap.wali.L}`, stats.hariIni.menginap.wali.P && `Pr:${stats.hariIni.menginap.wali.P}` ] .filter(Boolean).join(', ')}
+                    {[ stats?.hariIni?.menginap?.wali.L && `Lk:${stats?.hariIni?.menginap?.wali.L}`, stats?.hariIni?.menginap?.wali.P && `Pr:${stats?.hariIni?.menginap?.wali.P}` ] .filter(Boolean).join(', ')}
                   </div>
                 </div>
               )}
@@ -417,16 +430,16 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-sm opacity-90">Laki-laki: {stats.hariIni.umum.individu.L}</p>
-                  <p className="text-sm opacity-90">Perempuan: {stats.hariIni.umum.individu.P}</p>
+                  <p className="text-sm opacity-90">Laki-laki: {stats?.hariIni?.umum?.individu?.L}</p>
+                  <p className="text-sm opacity-90">Perempuan: {stats?.hariIni?.umum?.individu?.P}</p>
                 </div>
-                <p className="text-3xl font-bold">{stats.hariIni.umum.individu.total}</p>
+                <p className="text-3xl font-bold">{stats?.hariIni?.umum?.individu?.total}</p>
               </div>
-              {stats.hariIni.menginap.umum.individu.total > 0 && (
+              {stats?.hariIni?.menginap?.umum?.individu?.total > 0 && (
                 <div className="mt-2 text-sm bg-purple-700 px-2 py-1 rounded">
-                  Termasuk {stats.hariIni.menginap.umum.individu.total} tamu menginap
+                  Termasuk {stats?.hariIni?.menginap?.umum?.individu?.total} tamu menginap
                   <div className="text-xs opacity-90">
-                    {[ stats.hariIni.menginap.umum.individu.L && `Lk:${stats.hariIni.menginap.umum.individu.L}`, stats.hariIni.menginap.umum.individu.P && `Pr:${stats.hariIni.menginap.umum.individu.P}` ] .filter(Boolean).join(', ')}
+                    {[ stats?.hariIni?.menginap?.umum?.individu?.L && `Lk:${stats?.hariIni?.menginap?.umum?.individu?.L}`, stats?.hariIni?.menginap?.umum?.individu?.P && `Pr:${stats?.hariIni?.menginap?.umum?.individu?.P}` ] .filter(Boolean).join(', ')}
                   </div>
                 </div>
               )}
@@ -439,21 +452,21 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-sm opacity-90">Kunjungan: {stats.hariIni.umum.lembaga.total}</p>
-                  <p className="text-sm opacity-90">Jumlah: {stats.hariIni.umum.lembaga.jumlahOrang}</p>
+                  <p className="text-sm opacity-90">Kunjungan: {stats?.hariIni?.umum?.lembaga?.total}</p>
+                  <p className="text-sm opacity-90">Jumlah: {stats?.hariIni?.umum?.lembaga?.jumlahOrang}</p>
                   <p className="text-xs opacity-75">
-                    {[ stats.hariIni.umum.lembaga.L && `Lk:${stats.hariIni.umum.lembaga.L}`, stats.hariIni.umum.lembaga.P && `Pr:${stats.hariIni.umum.lembaga.P}` ] .filter(Boolean).join(', ')}
+                    {[ stats?.hariIni?.umum?.lembaga?.L && `Lk:${stats?.hariIni?.umum?.lembaga?.L}`, stats?.hariIni?.umum?.lembaga?.P && `Pr:${stats?.hariIni?.umum?.lembaga?.P}` ] .filter(Boolean).join(', ')}
                   </p>
                 </div>
-                <p className="text-3xl font-bold">{stats.hariIni.umum.lembaga.total}</p>
+                <p className="text-3xl font-bold">{stats?.hariIni?.umum?.lembaga?.total}</p>
               </div>
-              {stats.hariIni.menginap.umum.lembaga.total > 0 && (
+              {stats?.hariIni?.menginap?.umum?.lembaga?.total > 0 && (
                 <div className="mt-2 text-sm bg-yellow-700 px-2 py-1 rounded">
-                  Termasuk {stats.hariIni.menginap.umum.lembaga.total} lembaga menginap
+                  Termasuk {stats?.hariIni?.menginap?.umum?.lembaga?.total} lembaga menginap
                   <div className="text-xs opacity-90">
-                    ({stats.hariIni.menginap.umum.lembaga.jumlahOrang} orang)
+                    ({stats?.hariIni?.menginap?.umum?.lembaga?.jumlahOrang} orang)
                     <div className="text-xs">
-                      {[ stats.hariIni.menginap.umum.lembaga.L && `Lk:${stats.hariIni.menginap.umum.lembaga.L}`, stats.hariIni.menginap.umum.lembaga.P && `Pr:${stats.hariIni.menginap.umum.lembaga.P}` ] .filter(Boolean).join(', ')}
+                      {[ stats?.hariIni?.menginap?.umum?.lembaga?.L && `Lk:${stats?.hariIni?.menginap?.umum?.lembaga?.L}`, stats?.hariIni?.menginap?.umum?.lembaga?.P && `Pr:${stats?.hariIni?.menginap?.umum?.lembaga?.P}` ] .filter(Boolean).join(', ')}
                     </div>
                   </div>
                 </div>
@@ -494,8 +507,8 @@ export default function DashboardPage() {
                     {showDetailStats ? 'Sembunyikan Detail' : 'Lihat Detail'}
                   </button>
                 </div>
-                <p className="text-3xl font-bold">{stats.bulanIni.total}</p>
-                <p className="text-sm opacity-90">Total Orang: {stats.bulanIni.totalOrang}</p>
+                <p className="text-3xl font-bold">{stats?.bulanIni?.total}</p>
+                <p className="text-sm opacity-90">Total Orang: {stats?.bulanIni?.totalOrang}</p>
               </div>
 
               {/* Detail Statistik */}
@@ -507,10 +520,10 @@ export default function DashboardPage() {
                       <FiUserCheck className="text-xl" />
                       <h4 className="font-bold">Tamu Wali</h4>
                     </div>
-                    <p className="text-2xl font-bold">{stats.bulanIni.wali.total}</p>
+                    <p className="text-2xl font-bold">{stats?.bulanIni?.wali.total}</p>
                     <div className="text-sm opacity-90">
-                      <p>Laki-laki: {stats.bulanIni.wali.L}</p>
-                      <p>Perempuan: {stats.bulanIni.wali.P}</p>
+                      <p>Laki-laki: {stats?.bulanIni?.wali.L}</p>
+                      <p>Perempuan: {stats?.bulanIni?.wali.P}</p>
                     </div>
                   </div>
 
@@ -520,10 +533,10 @@ export default function DashboardPage() {
                       <FiUserPlus className="text-xl" />
                       <h4 className="font-bold">Tamu Umum (Individu)</h4>
                     </div>
-                    <p className="text-2xl font-bold">{stats.bulanIni.umum.individu.total}</p>
+                    <p className="text-2xl font-bold">{stats?.bulanIni?.umum?.individu?.total}</p>
                     <div className="text-sm opacity-90">
-                      <p>Laki-laki: {stats.bulanIni.umum.individu.L}</p>
-                      <p>Perempuan: {stats.bulanIni.umum.individu.P}</p>
+                      <p>Laki-laki: {stats?.bulanIni?.umum?.individu?.L}</p>
+                      <p>Perempuan: {stats?.bulanIni?.umum?.individu?.P}</p>
                     </div>
                   </div>
 
@@ -533,11 +546,11 @@ export default function DashboardPage() {
                       <FiBriefcase className="text-xl" />
                       <h4 className="font-bold">Tamu Lembaga</h4>
                     </div>
-                    <p className="text-2xl font-bold">{stats.bulanIni.umum.lembaga.total}</p>
+                    <p className="text-2xl font-bold">{stats?.bulanIni?.umum?.lembaga?.total}</p>
                     <div className="text-sm opacity-90">
-                      <p>Jumlah Orang: {stats.bulanIni.umum.lembaga.jumlahOrang}</p>
+                      <p>Jumlah Orang: {stats?.bulanIni?.umum?.lembaga?.jumlahOrang}</p>
                       <p className="text-xs">
-                        {[ stats.bulanIni.umum.lembaga.L && `Lk:${stats.bulanIni.umum.lembaga.L}`, stats.bulanIni.umum.lembaga.P && `Pr:${stats.bulanIni.umum.lembaga.P}` ] .filter(Boolean).join(', ')}
+                        {[ stats?.bulanIni?.umum?.lembaga?.L && `Lk:${stats?.bulanIni?.umum?.lembaga?.L}`, stats?.bulanIni?.umum?.lembaga?.P && `Pr:${stats?.bulanIni?.umum?.lembaga?.P}` ] .filter(Boolean).join(', ')}
                       </p>
                     </div>
                   </div>
@@ -569,7 +582,7 @@ export default function DashboardPage() {
               <h3 className="font-bold text-lg text-gray-800">Keperluan Tamu Hari Ini</h3>
             </div>
             <div className="space-y-3">
-              {stats.keperluan.map(({ keperluan, jumlah, jumlahOrang, eventName, eventId }) => (
+              {stats?.keperluan?.map(({ keperluan, jumlah, jumlahOrang, eventName, eventId }) => (
                 <div key={keperluan} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg transition duration-200">
                   <div className="flex flex-col">
                     <span className="text-gray-700">{keperluan}</span>
@@ -714,11 +727,11 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {tamu.length > 0 ? (
-                      tamu.map((item, index) => (
-                        <tr key={item.id} className="hover:bg-gray-50 transition duration-150">
+                  {tamu.length > 0 ? (
+                    tamu.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-gray-50 transition duration-150">
                         <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500">
-                          {index + 1}
+                          {(currentPage - 1) * 20 + index + 1}
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           {item.fotoSelfi ? (
@@ -752,6 +765,11 @@ export default function DashboardPage() {
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex flex-col">
                             <span className="font-medium">{item.nama}</span>
+                            {item.asal && (
+                              <span className="text-xs text-gray-500">
+                                {item.asal}
+                              </span>
+                            )}
                             <a
                               href={`https://wa.me/${item.noKontak.replace(/^0/, '62').replace(/^\+?620/, '62')}`}
                               target="_blank"
@@ -874,29 +892,31 @@ export default function DashboardPage() {
           onClick={() => setSelectedPhoto(null)}
         >
           <div 
-            className="relative max-w-3xl max-h-[90vh] bg-white rounded-lg shadow-xl overflow-hidden"
+            className="relative w-full max-w-3xl bg-white rounded-lg shadow-xl overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button
-              className="absolute top-2 right-2 p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-opacity"
+              className="absolute top-2 right-2 p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-opacity z-10"
               onClick={() => setSelectedPhoto(null)}
             >
               <FiX className="h-6 w-6" />
             </button>
             {isLoadingPhoto ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
               </div>
             ) : (
-              <img
-                src={selectedPhoto}
-                className="w-full h-full object-contain"
-                alt="Foto Selfi"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "https://www.gravatar.com/avatar/?d=mp&s=360";
-                }}
-              />
+              <div className="aspect-auto max-h-[80vh] overflow-auto">
+                <img
+                  src={selectedPhoto}
+                  className="w-full h-auto max-h-full object-contain"
+                  alt="Foto Selfi"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://www.gravatar.com/avatar/?d=mp&s=360";
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>

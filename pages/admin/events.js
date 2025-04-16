@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { FiList, FiCalendar, FiClock, FiToggleLeft, FiToggleRight, FiTrash2, FiEdit, FiUserPlus, FiUsers, FiX } from 'react-icons/fi';
 import AdminLayout from '../../components/Admin/AdminLayout';
+import LoadingBar from '../../components/LoadingBar';
 import TableSkeleton from '../../components/Admin/TableSkeleton';
 
 export async function getServerSideProps(context) {
@@ -624,29 +625,7 @@ export default function EventManagement({ user }) {
           </div>
         )}
       </div>
-{isLoading && (
-  <div className="fixed top-0 left-0 right-0 z-50">
-    <div className="h-1 bg-blue-100">
-      <div className="h-full bg-blue-500 animate-loading-bar"></div>
-    </div>
-    <style jsx>{`
-      @keyframes loading {
-        0% {
-          width: 0%;
-        }
-        50% {
-          width: 70%;
-        }
-        100% {
-          width: 100%;
-        }
-      }
-      .animate-loading-bar {
-        animation: loading 1.5s ease-in-out infinite;
-      }
-    `}</style>
-  </div>
-)}
+    {isLoading && (<LoadingBar /> )}
     </AdminLayout>
   );
 }

@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { isAuthenticated, isPublicRoute } from '../../middleware/auth';
+import webpush from 'web-push';
 
+webpush.setVapidDetails(
+  'mailto:your@email.com',
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 const prisma = new PrismaClient();
 
 export const config = {
@@ -70,6 +76,29 @@ export default async function handler(req, res) {
       const savedTamu = await prisma.tamu.create({
         data
       });
+      if(savedTamu){
+        const subscriptions = await prisma.pushSubscription.findMany({
+          include: { user: true }
+        });
+        
+        const payload = JSON.stringify({
+          title: 'Tamu Baru',
+          body: `${savedTamu.nama} dari ${savedTamu.asal}`,
+          url: '/admin'
+        });
+        
+        await Promise.allSettled(
+          subscriptions.map(sub => 
+            webpush.sendNotification({
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.p256dh,
+                auth: sub.auth
+              }
+            }, payload)
+          )
+        );
+      }
       res.status(200).json(savedTamu);
     } catch (error) {
       console.error('Error saving data:', error);

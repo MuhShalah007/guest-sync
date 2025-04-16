@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export default async function handler(req, res) {
   const isAuth = await isAuthenticated(req);
   
-  if (!isAuth || isAuth.role !== 'ADMIN') {
+  if (!isAuth || !['ADMIN', 'HUMAS'].includes(isAuth.role)) {
     return res.status(401).json({ ok: false, error_code: 401, description: 'Unauthorized' });
   }
 
