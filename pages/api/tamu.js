@@ -23,6 +23,23 @@ export default async function handler(req, res) {
     return res.status(401).json({ ok: false, error_code: 401, description:'Unauthorized' });
   }
 
+  if (req.method === 'PATCH') {
+    try {
+      const { id } = req.query;
+      const data = req.body;
+      
+      const updatedTamu = await prisma.tamu.update({
+        where: { id: parseInt(id) },
+        data
+      });
+      
+      return res.json({ ok: true, result: updatedTamu });
+    } catch (error) {
+      console.error('Error updating guest:', error);
+      return res.status(500).json({ ok: false, error: error.message });
+    }
+  }
+
   if (req.method === 'POST') {
     try {
       const data = req.body;

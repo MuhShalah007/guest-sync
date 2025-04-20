@@ -54,15 +54,21 @@ export default async function handler(
         }
         const uploadedFile = Array.isArray(file) ? file[0] : file;
         const filePath = uploadedFile.filepath;
+        const keepOriginalName = 'keepOriginalName' in fields;
+        let fileName: string;
         
-        const fileExt = path.extname(uploadedFile.originalFilename || '.jpg');
+        if (keepOriginalName && uploadedFile.originalFilename) {
+          fileName = uploadedFile.originalFilename;
+        } else {
+          const fileExt = path.extname(uploadedFile.originalFilename || '.jpg');
+          const randomString = crypto.randomBytes(16).toString('hex');
+          const md5Hash = crypto.createHash('md5').update(randomString).digest('hex');
+          fileName = `${md5Hash}${fileExt}`;
+        }
         
-        const randomString = crypto.randomBytes(16).toString('hex');
-        const md5Hash = crypto.createHash('md5').update(randomString).digest('hex');
-        const fileName = `${md5Hash}${fileExt}`;
         const newPath = path.join(UPLOAD_DIR, fileName);
-        const protocol = req.headers['x-forwarded-proto']; // || 'http'; // Use 'http' as fallback
-        const host = req.headers.host; // || 'localhost:3000'; // Fallback for local dev
+        const protocol = req.headers['x-forwarded-proto'];
+        const host = req.headers.host;
         const domain = `${protocol}://${host}`;
 
         await fs.rename(filePath, newPath).then(() => {
@@ -70,7 +76,6 @@ export default async function handler(
             ok: true,
             result: `${domain}/api/file/${fileName}`,
           });
-
         }).catch(err => {
           return res.status(500).json({
             ok: false,

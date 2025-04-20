@@ -781,19 +781,26 @@ export default function DashboardPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            item.jenisTamu === 'wali' 
-                              ? 'bg-green-100 text-green-800'
-                              : item.jenisKunjungan === 'lembaga'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {item.jenisTamu === 'wali' 
-                              ? 'Wali' 
-                              : item.jenisKunjungan === 'lembaga' 
-                                ? 'Lembaga' 
-                                : 'Umum'}
-                          </span>
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              item.jenisTamu === 'wali' 
+                                ? 'bg-green-100 text-green-800'
+                                : item.jenisKunjungan === 'lembaga'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {item.jenisTamu === 'wali' 
+                                ? 'Wali' 
+                                : item.jenisKunjungan === 'lembaga' 
+                                  ? 'Lembaga' 
+                                  : 'Umum'}
+                            </span>
+                            {item.jenisKunjungan === 'lembaga' && (
+                              <span className="text-xs text-gray-500 mt-1">
+                                {item.namaLembaga}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           {item.kelamin === 'G' 

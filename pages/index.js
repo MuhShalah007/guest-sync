@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { motion } from 'framer-motion';
 import Footer from '../components/Footer';
-import { FiUserCheck, FiLoader, FiUser, FiUsers, FiLogOut, FiBriefcase, FiCalendar, FiUserPlus } from 'react-icons/fi';
+import { FiX, FiUserCheck, FiLoader, FiUser, FiUsers, FiLogOut, FiBriefcase, FiCalendar, FiUserPlus } from 'react-icons/fi';
 import { AiOutlineUser, AiOutlineBook, AiOutlineEnvironment, AiOutlineMan, AiOutlineWoman } from "react-icons/ai";
 import DatePicker from 'react-datepicker';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
 export default function Home() {
+  const [showSuccessCard, setShowSuccessCard] = useState(false);
   const [jenisTamu, setJenisTamu] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [events, setEvents] = useState([]);
@@ -29,6 +30,7 @@ export default function Home() {
     menginap: false,
     tanggalKeluar: ''
   });
+  const [successData, setSuccessData] = useState(formData);
   const onCancel = () => {
     setJenisTamu('');
     setFormData({
@@ -82,6 +84,126 @@ export default function Home() {
       abortController.abort();
     };
   }, []);
+      
+  // Render success card with Framer Motion
+  const SuccessCard = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50"
+    >
+      <motion.div 
+        className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4"
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      >
+        <div className="relative">
+          <motion.button
+            onClick={() => {
+              setShowSuccessCard(false);
+              setJenisTamu('');
+            }}
+            className="absolute -left-2 -top-2 p-2 rounded-full bg-white shadow-md hover:bg-gray-100"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <FiX className="w-5 h-5 text-gray-600" />
+          </motion.button>
+          
+          <motion.div 
+            className="text-center mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <motion.div 
+              className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 200, 
+                damping: 20,
+                delay: 0.3
+              }}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-500/30"
+                animate={{ 
+                  rotate: [0, 360],
+                  scale: [1, 1.2, 1]
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              />
+              <motion.img
+                src={successData.fotoSelfi}
+                alt="Foto Tamu"
+                className="w-full h-full object-cover relative z-10"
+                initial={{ scale: 1.2, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20,
+                  delay: 0.4
+                }}
+                whileHover={{ scale: 1.1 }}
+              />
+            </motion.div>
+            
+            <motion.h3 
+              className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              Ahlan wa Sahlan wa Marhaban, {successData.nama}! Semoga Allah Subhanahu wa Ta'ala Memberkahi Kunjungan Anda
+            </motion.h3>
+          </motion.div>
+          
+          <motion.div 
+            className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <p className="text-sm text-green-800 mb-3">Silakan tunjukkan halaman ini ke petugas/satpam untuk membuktikan bahwa Anda sudah mengisi formulir dengan lengkap:</p>
+            <motion.div 
+              className="flex flex-col items-center justify-center space-y-4 bg-white p-3 rounded-lg shadow-sm"
+              whileHover={{ scale: 1.02 }}
+            >
+              <motion.img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DS${String(successData.id).padStart(6, '0')}`}
+                alt="QR Code"
+                className="w-32 h-32"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ 
+                  delay: 0.7,
+                  type: "spring",
+                  stiffness: 200
+                }}
+              />
+              <motion.p 
+                className="text-sm text-gray-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                Kode Unik: {`DS${String(successData.id).padStart(6, '0')}`}
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -159,7 +281,9 @@ export default function Home() {
       
       const result = await response.json();
       console.log('Data berhasil disimpan:', result);
-      alert('Data berhasil disimpan!');
+      
+      setSuccessData(result);
+      setShowSuccessCard(true);
 
       setFormData({
         nama: '',
@@ -406,6 +530,23 @@ export default function Home() {
 
   return (
   <>
+  {showSuccessCard && <SuccessCard />}
+  <style jsx>{`
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -30;
+      }
+    }
+    .animate-spin-slow {
+      animation: spin-slow 8s linear infinite;
+    }
+    .animate-dash {
+      animation: dash 1.5s linear infinite;
+      `}</style>
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
       <div className="container mx-auto px-4 py-8">
 
@@ -886,7 +1027,7 @@ export default function Home() {
                             required={!formData.eventId}
                           ></textarea>
                         </div>
-                      ) : (
+                      ) : events.length > 0 ? (
                         <div className="space-y-4">
                           <label className="block text-sm font-medium text-gray-700">
                             Pilih Acara <span className="text-red-500">*</span>
@@ -939,6 +1080,10 @@ export default function Home() {
                               </label>
                             ))}
                           </div>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500 py-4">
+                          Tidak ada acara yang tersedia
                         </div>
                       )}
                     </div>
